@@ -4,6 +4,12 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
 public class TMD_IO {
+	public static String readRaw(ByteBuffer b, int l) throws UnsupportedEncodingException {
+		byte[] tmp = new byte[l];
+		b.get(tmp);
+		return new String(tmp);
+	}
+
 	public static String read(ByteBuffer b, int l) throws UnsupportedEncodingException {
 		byte[] tmp = new byte[l];
 		b.get(tmp);
@@ -29,23 +35,14 @@ public class TMD_IO {
 			n[i] = b.getInt();
 	}
 
-	public static short[] shorts(ByteBuffer b, int n) {
-		short[] o = new short[n];
-		for (int i = 0; i < n; i++)
-			o[i] = b.getShort();
-		return o;
+	public static void shorts(ByteBuffer b, short[] n) {
+		for (int i = 0; i < n.length; i++)
+			n[i] = b.getShort();
 	}
 
-	public static byte[] bytes(ByteBuffer b, int n) {
-		byte[] o = new byte[n];
-		b.get(o);
-		return o;
-	}
-
-	public static float[] floats(ByteBuffer b, int n) {
-		float[] o = new float[n];
-		for (int i = 0; i < n; i++)
-			o[i] = b.getFloat();
-		return o;
+	public static float[] floats(ByteBuffer b, float[] n) {
+		for (int i = 0; i < n.length; i++)
+			n[i] = b.getFloat();
+		return n;
 	}
 }

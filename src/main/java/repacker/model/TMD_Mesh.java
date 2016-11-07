@@ -5,8 +5,9 @@ import java.nio.ByteBuffer;
 
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.collision.BoundingBox;
 
-public class TMD_Mesh {
+public class TMD_Mesh extends TMD_IO {
 	public static class Vertex {
 		public static final int SIZEOF = 4 * (3 + 3 + 2 + 2);
 
@@ -21,37 +22,66 @@ public class TMD_Mesh {
 		public final Vector2 skinningInfo, texpos;
 	}
 
-	private final Vertex[] verts;
+	public final Vertex[] verts;
 	// this seems to be a bone mapping, NOT a nodes-with-this-mesh mapping
-	private final int[] nodes;
-	private final String material_name;
-	private final short[] tri_strip;
+	public final int[] meshParents;
+	public final String material_name;
+	public final short[] tri_strip;
+
+	public final Vector3 boundingCenter, boundingExtents;
+
+	private boolean loadedData;
+
+	private final ByteBuffer vertex, index;
+
+	public final byte[] unk1 = new byte[4];
+	public final byte[] unk2 = new byte[8];
+	public final byte[] unk3 = new byte[4];
 
 	public TMD_Mesh(ByteBuffer b) throws UnsupportedEncodingException {
-		byte[] unknown1 = bytes(b, 4);
+		b.get(unk1);
 		int tri_strip_size = b.getInt();
 		int num_verts = b.getInt();
 		material_name = read(b, 32);
-		byte[] unknown2 = bytes(b, 4 + 4);
+		b.get(unk2);
 		int num_nodes = b.getInt();
-		byte[] unknown3 = bytes(b, 4);
+		b.get(unk3);
 
-		Vector3 boundingCenter = new Vector3(b.getFloat(), b.getFloat(), b.getFloat());
-		Vector3 boundingExtents = new Vector3(b.getFloat(), b.getFloat(), b.getFloat());
+		boundingCenter = new Vector3(b.getFloat(), b.getFloat(), b.getFloat());
+		boundingExtents = new Vector3(b.getFloat(), b.getFloat(), b.getFloat());
 
-		nodes = new int[num_nodes];
-		for (int j = 0; j < nodes.length; j++)
-			nodes[j] = b.getInt();
+		meshParents = new int[num_nodes];
+		for (int j = 0; j < meshParents.length; j++)
+			meshParents[j] = b.getInt();
 		verts = new Vertex[num_verts];
-		for (int i = 0; i < num_verts; i++)
-			verts[i] = new Vertex(b);
 		tri_strip = new short[tri_strip_size];
-		for (int j = 0; j < tri_strip.length; j++)
-			tri_strip[j] = b.getShort();
 
-		// System.out.println(
-		// "Mesh " + material_name + " " + hex(unknown1) + " | " +
-		// hex(unknown2) + " | " + hex(unknown3));
+		int vertexOffset = b.position();
+		int indexOffset = vertexOffset + num_verts * Vertex.SIZEOF;
+		int indexEnd = indexOffset + tri_strip_size * 2;
+
+		b.position(vertexOffset);
+		b.limit(indexOffset);
+		this.vertex = b.slice();
+		this.vertex.order(b.order());
+		b.position(indexOffset);
+		b.limit(indexEnd);
+		this.index = b.slice();
+		this.index.order(b.order());
+
+		b.position(indexEnd);
+		b.limit(b.capacity());
+	}
+
+	public void loadVtxAndTri() {
+		if (loadedData)
+			return;
+		vertex.position(0);
+		for (int i = 0; i < verts.length; i++)
+			verts[i] = new Vertex(vertex);
+		index.position(0);
+		shorts(index, tri_strip);
+		loadedData = true;
 	}
 
 	@Override
