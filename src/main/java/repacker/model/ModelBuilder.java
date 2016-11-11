@@ -129,7 +129,6 @@ public class ModelBuilder {
 					fake.parts[0].bones = new ArrayMap<>();
 					for (int i = 0; i < m.meshParentsRef.length; i++) {
 						TMD_Node node = m.meshParentsRef[i];
-						// output == node position * inv(skinning matrix) * vertex
 						fake.parts[0].bones.put(node.node_name, new Matrix4(node.worldPosition));
 					}
 				}
@@ -146,6 +145,7 @@ public class ModelBuilder {
 						VertexAttribute.TexCoords(0) };
 				vsize = 3 + 3 + 2;
 			}
+
 			mm.vertices = new float[vsize * m.verts.length];
 			for (int i = 0; i < m.verts.length; i++) {
 				Vertex v = m.verts[i];
@@ -163,6 +163,12 @@ public class ModelBuilder {
 					mm.vertices[o + 9] = v.primaryBoneAlpha;
 					mm.vertices[o + 10] = derefVert[v.secondaryBone];
 					mm.vertices[o + 11] = 1 - v.primaryBoneAlpha;
+					if (!Float.isFinite(v.primaryBoneAlpha) || v.primaryBoneAlpha < 0 || v.primaryBoneAlpha > 1)
+						System.err.println("Invalid bone alpha");
+					if (mm.vertices[o + 8] < 0 || mm.vertices[o + 8] >= m.meshParents.length)
+						System.err.println("Bad primary bone");
+					if (mm.vertices[o + 10] < 0 || mm.vertices[o + 10] >= m.meshParents.length)
+						System.err.println("Bad secondary bone");
 				}
 			}
 			mm.parts = new ModelMeshPart[1];

@@ -4,11 +4,15 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.Ray;
+
+import repacker.Utils;
 
 public class TMD_Mesh extends TMD_IO {
 	public static class Vertex {
@@ -105,6 +109,8 @@ public class TMD_Mesh extends TMD_IO {
 		return "MS[" + material_name + "]";
 	}
 
+	private final boolean useBoneGlow = false;
+
 	@Override
 	public void link() {
 		for (int i = 0; i < meshParents.length; i++)
@@ -113,11 +119,29 @@ public class TMD_Mesh extends TMD_IO {
 		loadVtxAndTri();
 
 		// Generate bones if possible
+		Set<TMD_Mesh.Vertex> fixed = new HashSet<>();
+
 		for (TMD_Mesh.Vertex v : verts) {
-			if (meshParentsRef.length == 1 || 0<1) {
+			if (fixed.contains(v))
+				continue;
+			if (meshParentsRef.length == 1) {
 				v.secondaryBone = v.primaryBone = meshParentsRef[0].id;
 				v.primaryBoneAlpha = 1;
-			} else {
+			} else if (useBoneGlow) {
+				// Nodes with equal positions must have identical weighting.
+				Set<TMD_Mesh.Vertex> mine = new HashSet<>();
+				Vector3 bulkPosition = new Vector3();
+				Vector3 bulkNormal = new Vector3();
+				for (TMD_Mesh.Vertex v2 : verts) {
+					if (v.position.epsilonEquals(v2.position, 1e-2f)) {
+						mine.add(v2);
+						bulkNormal.add(v.normal);
+						bulkPosition.add(v.position);
+					}
+				}
+				bulkPosition.scl(1f / mine.size());
+				bulkNormal.scl(1f / mine.size());
+
 				// calculate bone weight using bone glow. Creds to Rich Wareham
 				// and Joan Lasenby
 				Object[][] sts = new Object[meshParents.length][2];
@@ -134,30 +158,31 @@ public class TMD_Mesh extends TMD_IO {
 						float boneLen = dir.len();
 						for (float t = 0; t <= 1; t += 0.1f) {
 							p.set(start).mulAdd(dir, t);
-							rd.set(v.position).sub(p);
+							rd.set(bulkPosition).sub(p);
 							float limit = rd.len();
 							rd.nor();
-							float lambert = rd.dot(v.normal) / (limit * limit);
-							if (lambert < 0)
-								continue;
-							float transmit = new Vector3(rd).crs(dir).len() / boneLen;
+							// float lambert = rd.dot(bulkNormal) / (limit *
+							// limit);
+							// if (lambert < 0)
+							// continue;
 							boolean hit = false;
 							Ray ray = new Ray(p, rd);
 							for (int i = 0; i < tri_strip.length - 2; i++) {
 								Vertex va = verts[tri_strip[i]];
-								Vertex vb = verts[tri_strip[i+1]];
-								Vertex vc = verts[tri_strip[i+2]];
+								Vertex vb = verts[tri_strip[i + 1]];
+								Vertex vc = verts[tri_strip[i + 2]];
 								if (va != vb && vb != vc && vc != va && Intersector.intersectRayTriangle(ray,
 										va.position, vb.position, vc.position, out)) {
 									float d = out.dst(ray.origin);
-									if (d > 0 && d < limit) {
+									if (d > 0.5f && d < limit) {
 										hit = true;
 										break;
 									}
 								}
 							}
 							if (!hit) {
-								float c = lambert * transmit;
+								float transmit = new Vector3(rd).crs(dir).len() / boneLen;
+								float c = transmit / (limit * limit);
 								w += c;
 							}
 						}
@@ -176,8 +201,49 @@ public class TMD_Mesh extends TMD_IO {
 				v.secondaryBone = (int) sts[1][0];
 				float sbw = (float) sts[1][1] + 1;
 				v.primaryBoneAlpha = pbw / (pbw + sbw);
+
+				fixed.addAll(mine);
+				for (TMD_Mesh.Vertex vp : mine) {
+					vp.primaryBone = v.primaryBone;
+					vp.secondaryBone = v.secondaryBone;
+					vp.primaryBoneAlpha = v.primaryBoneAlpha;
+				}
+			} else {
+				TMD_Node bestNode = null;
+				float bestDist = Float.MAX_VALUE;
+				TMD_Node secondBestNode = null;
+				float secondBestDist = Float.MAX_VALUE;
+
+				for (int b = 1; b < meshParents.length; b++) {
+					if (meshParentsRef[b].parentRef != null) {
+						Vector3 start = meshParentsRef[b].worldPosition.getTranslation(new Vector3());
+						Vector3 end = meshParentsRef[b].parentRef.worldPosition.getTranslation(new Vector3());
+						Vector3 cd = Utils.nearestSegmentPoint(start, end, v.position);
+						cd.sub(v.position);
+						float len = cd.len();
+						cd.scl(1 / len);
+						float crs = cd.crs(end.sub(start).nor()).len();
+						len *= 5 + crs;
+						if (len < secondBestDist) {
+							secondBestDist = len;
+							secondBestNode = meshParentsRef[b];
+						}
+						if (secondBestDist < bestDist) {
+							TMD_Node tn = bestNode;
+							float td = bestDist;
+							bestDist = secondBestDist;
+							bestNode = secondBestNode;
+							secondBestDist = td;
+							secondBestNode = tn;
+						}
+					}
+				}
+				v.primaryBone = bestNode.id;
+				v.secondaryBone = secondBestNode.id;
+				float pbw = (float) Math.exp(-bestDist);
+				float sbw = (float) Math.exp(-secondBestDist);
+				v.primaryBoneAlpha = pbw / (pbw + sbw);
 			}
 		}
-		System.exit(0);
 	}
 }

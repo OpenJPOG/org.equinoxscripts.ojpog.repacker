@@ -32,7 +32,7 @@ public class ModelExtractor {
 		return out.toString();
 	}
 
-	private static String divide(String s, int n) {
+	public static String divide(String s, int n) {
 		StringBuilder out = new StringBuilder(s.length() + (s.length() / n) + 10);
 		for (int i = 0; i < s.length(); i += n) {
 			out.append(s.substring(i, Math.min(s.length(), i + n)));
@@ -81,7 +81,7 @@ public class ModelExtractor {
 	public static void main(String[] args) throws IOException, InterruptedException {
 		for (File base_input : Base.BASE_IN) {
 			for (File f : new File(base_input, "Data/Models").listFiles()) {
-				String[] find = { "Brach_hi.tmd"};//"Cow.tmd" };
+				String[] find = { "Brach_hi.tmd" };
 				Stream<String> findS = Arrays.stream(find);
 				if (f.getName().endsWith(".tmd") && (find.length == 0
 						|| findS.map(s -> f.getName().contains(s)).filter(s -> s).findAny().isPresent())) {
@@ -106,9 +106,11 @@ public class ModelExtractor {
 							System.out.println(n.localPosition);
 							System.out.println(tmp);
 						}
-						System.out.println(a.length + "\t" + a.name);
-						
-						System.out.println(file.scene.sceneGraph(aa -> ""+aa.worldPosition.getRotation(new Quaternion())));
+						System.out.println(Arrays.stream(file.scene.animations.animations)
+								.map(r -> r.name + " (" + r.length + "s)").reduce((r, b) -> r + ", " + b).get());
+
+						System.out.println(
+								file.scene.sceneGraph(aa -> "" + aa.worldPosition.getRotation(new Quaternion())));
 
 						ModelBuilder.write(f.getName().substring(0, f.getName().length() - 4), file);
 					} catch (Exception e) {
