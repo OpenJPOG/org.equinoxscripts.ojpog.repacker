@@ -1,18 +1,19 @@
 package repacker.model;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 import java.util.stream.Stream;
 
+import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.math.Quaternion;
+import com.badlogic.gdx.math.Vector3;
+
 import repacker.Base;
+import repacker.Utils;
+import repacker.model.anim.TMD_Animation;
+import repacker.model.anim.TMD_Channel;
 
 public class ModelExtractor {
 	static {
@@ -40,7 +41,7 @@ public class ModelExtractor {
 		return out.toString();
 	}
 
-	private static String hex(byte[] d) {
+	public static String hex(byte[] d) {
 		StringBuilder sb = new StringBuilder();
 		for (byte f : d) {
 			String s = Integer.toHexString(f & 0xFF);
@@ -74,43 +75,42 @@ public class ModelExtractor {
 		return sb.toString();
 	}
 
-	private static final String[] SKINNED_CATS = { "dc", "dhbja", "djb", "dma", "dmbt", "df", "dha" };
+	// skinned; { "dc", "dhbja", "djb", "dma", "dmbt", "df", "dha" }
+	private static final String[] FIND_CATS = {};
 
 	public static void main(String[] args) throws IOException, InterruptedException {
-		Map<String, Set<Object>> flags = new HashMap<String, Set<Object>>();
-
-		byte[] buffer = new byte[1024];
 		for (File base_input : Base.BASE_IN) {
 			for (File f : new File(base_input, "Data/Models").listFiles()) {
-				String[] find = { "BallRide_hi.tmd" };
+				String[] find = { "Brach_hi.tmd"};//"Cow.tmd" };
 				Stream<String> findS = Arrays.stream(find);
 				if (f.getName().endsWith(".tmd") && (find.length == 0
 						|| findS.map(s -> f.getName().contains(s)).filter(s -> s).findAny().isPresent())) {
+					System.out.println("Read " + f);
 					try {
-						ByteArrayOutputStream bos = new ByteArrayOutputStream();
-						FileInputStream fin = new FileInputStream(f);
-						while (true) {
-							int s = fin.read(buffer);
-							if (s > 0)
-								bos.write(buffer, 0, s);
-							else
-								break;
-						}
-						fin.close();
-						bos.close();
-						ByteBuffer data = ByteBuffer.wrap(bos.toByteArray()).order(ByteOrder.LITTLE_ENDIAN);
+						ByteBuffer data = Utils.read(f);
 						TMD_File file = new TMD_File(data);
-						// if (!Arrays.stream(SKINNED_CATS).filter(s ->
-						// file.category.equalsIgnoreCase(s)).findAny()
-						// .isPresent())
-						// continue;
-						System.out.println(file.scene
-								.sceneGraph(node -> divide(pad(Integer.toBinaryString(node.scene_Unk1), 32), 4)));
-						ModelBuilder.write(f.getName().substring(0, f.getName().length() - 4), file);
+						if (FIND_CATS.length > 0 && !Arrays.stream(FIND_CATS)
+								.filter(s -> file.category.equalsIgnoreCase(s)).findAny().isPresent())
+							continue;
 
-						// needs moving:
-						// Door2_01, Door1_02, MainGate03, WCentr12,
-						// Door2, Door1
+						TMD_Animation a = file.scene.animations.animations[0];
+						for (TMD_Channel c : a.channels) {
+							TMD_Node n = c.nodeRef;
+							if (n == null)
+								continue;
+							Vector3 tmp3 = new Vector3();
+							Quaternion tmpQ = new Quaternion();
+							c.value(0, tmp3, tmpQ, true);
+							Matrix4 tmp = new Matrix4().set(tmp3, tmpQ);
+							System.out.println(n.node_name);
+							System.out.println(n.localPosition);
+							System.out.println(tmp);
+						}
+						System.out.println(a.length + "\t" + a.name);
+						
+						System.out.println(file.scene.sceneGraph(aa -> ""+aa.worldPosition.getRotation(new Quaternion())));
+
+						ModelBuilder.write(f.getName().substring(0, f.getName().length() - 4), file);
 					} catch (Exception e) {
 						e.printStackTrace();
 					}

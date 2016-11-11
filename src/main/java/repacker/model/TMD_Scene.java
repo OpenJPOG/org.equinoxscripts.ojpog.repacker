@@ -2,55 +2,54 @@ package repacker.model;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.function.Function;
 
+import repacker.model.anim.TMD_AnimationBlock;
+
 public class TMD_Scene extends TMD_IO {
-	public final byte[] unk1 = new byte[2];
-	public final short sceneFeatures;
 	public final byte[] unk2_Zero = new byte[42];
 	public final byte[] unk3 = new byte[4];
 	public final int[] unk4 = new int[9];
-	public final TMD_Node[] nodes;
+	public final int[] unk5 = new int[4];
+	public TMD_Node[] nodes;
 
-	// skinned, or
-	public static final short MESH_TYPE_SKINNED = 8;
-	// or any combination of these:
-	public static final short MESH_TYPE_STATICS = 1;
-	public static final short MESH_TYPE_UNKNOWN2 = 2;
-	public static final short MESH_TYPE_SOME_ANIM = 4;
+	public int[] unk6;
+	public TMD_AnimationBlock animations;
 
-	// Vehicle: 1,2,5
-	// Flora: 1
-	// Misc: 1,2,3,4,8
-	// People: 5,8
-	// Struct=1,2,4,6,8
-	// Others: 8
-
-	public TMD_Scene(ByteBuffer data) throws UnsupportedEncodingException {
-		short numNodes = data.getShort(0x40);
-		data.position(0x44);
-		data.get(unk1);
-		sceneFeatures = data.getShort();
+	public TMD_Scene load(ByteBuffer data) throws UnsupportedEncodingException {
+		data.position(0x40);
+		short numNodes = data.getShort();
+		short unkS1 = data.getShort();
+		short numUnk6 = data.getShort();
+		short unkS3 = data.getShort();
 		data.get(unk2_Zero);
 		data.get(unk3);
 		nodes = new TMD_Node[numNodes];
 		for (int i = 0; i < numNodes; i++) {
 			data.position(0x7C + i * 0xB0);
-			nodes[i] = new TMD_Node(data);
+			nodes[i] = new TMD_Node(file, data, i);
 		}
+		for (TMD_Node n : nodes)
+			n.link();
 		data.position(0x7C + numNodes * 0xB0);
-		ints(data, unk4);
-		for (int i = 0; i < numNodes; i++) {
-			nodes[i].scene_Unk1 = data.getInt();
+		int offs = 0x3C + data.getInt(0x1C) + 4;
+		System.out.println(unkS1 + " " + numUnk6 + " " + unkS3);
+		unk6 = new int[numUnk6];
+		ints(data, unk6);
+		animations = new TMD_AnimationBlock(file, data);
+		System.out.println("Anim end " + data.position() + " v " + offs);
+		return this;
+	}
 
-			if (nodes[i].parent >= 0) {
-				TMD_Node par = nodes[nodes[i].parent];
-				nodes[i].parentRef = par;
-				par.childRef = Arrays.copyOf(par.childRef, par.childRef.length + 1);
-				par.childRef[par.childRef.length - 1] = nodes[i];
-			}
-		}
+	public TMD_Scene(TMD_File file) throws UnsupportedEncodingException {
+		super(file);
+	}
+
+	@Override
+	public void link() {
+//		for (TMD_Node n : nodes)
+//			n.link();
+		animations.link();
 	}
 
 	private int calcMaxLen(TMD_Node node, String indent) {

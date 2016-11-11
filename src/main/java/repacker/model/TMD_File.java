@@ -3,6 +3,8 @@ package repacker.model;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import repacker.model.ext.TKL_File;
+
 public class TMD_File extends TMD_IO {
 	public final String category;
 	public final long unkCategory;
@@ -14,6 +16,8 @@ public class TMD_File extends TMD_IO {
 	public final TMD_MeshBlock meshes;
 
 	public TMD_File(ByteBuffer data) throws IOException {
+		super(null);
+		this.file = this;
 		if (!read(data, 4).equals("TMDL"))
 			throw new IOException("Bad magic");
 		data.position(12);
@@ -26,7 +30,19 @@ public class TMD_File extends TMD_IO {
 		data.get(unk2);
 		data.get(unk3);
 
-		this.scene = new TMD_Scene(data);
-		this.meshes = new TMD_MeshBlock(data);
+		this.scene = new TMD_Scene(this);
+		this.scene.load(data);
+		this.meshes = new TMD_MeshBlock(this, data);
+
+		this.link();
+	}
+
+	public TKL_File tklRepo;
+
+	@Override
+	public void link() {
+		this.tklRepo = TKL_File.tkl(category + ".tkl");
+		this.scene.link();
+		this.meshes.link();
 	}
 }

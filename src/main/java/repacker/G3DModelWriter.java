@@ -337,7 +337,7 @@ public class G3DModelWriter {
 					nao.put("scaling", Arrays.asList(v));
 				}
 			}
-			ao.put("bones", ao);
+			ao.put("bones", Arrays.asList(na));
 		}
 		output.put("animations", Arrays.asList(anim));
 	}

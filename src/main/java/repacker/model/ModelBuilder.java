@@ -3,7 +3,6 @@ package repacker.model;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.Writer;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -17,23 +16,29 @@ import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.GL30;
 import com.badlogic.gdx.graphics.VertexAttribute;
 import com.badlogic.gdx.graphics.g3d.loader.G3dModelLoader;
+import com.badlogic.gdx.graphics.g3d.model.data.ModelAnimation;
 import com.badlogic.gdx.graphics.g3d.model.data.ModelData;
 import com.badlogic.gdx.graphics.g3d.model.data.ModelMaterial;
-import com.badlogic.gdx.graphics.g3d.model.data.ModelMaterial.MaterialType;
 import com.badlogic.gdx.graphics.g3d.model.data.ModelMesh;
 import com.badlogic.gdx.graphics.g3d.model.data.ModelMeshPart;
 import com.badlogic.gdx.graphics.g3d.model.data.ModelNode;
+import com.badlogic.gdx.graphics.g3d.model.data.ModelNodeAnimation;
+import com.badlogic.gdx.graphics.g3d.model.data.ModelNodeKeyframe;
 import com.badlogic.gdx.graphics.g3d.model.data.ModelNodePart;
 import com.badlogic.gdx.graphics.g3d.model.data.ModelTexture;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.ArrayMap;
 import com.badlogic.gdx.utils.JsonReader;
 
 import repacker.Base;
 import repacker.G3DModelWriter;
 import repacker.model.TMD_Mesh.Vertex;
+import repacker.model.anim.TMD_Animation;
+import repacker.model.anim.TMD_Channel;
+import repacker.model.anim.TMD_KeyFrame;
 
 public class ModelBuilder {
 	public static void write(String id, TMD_File file) throws IOException {
@@ -48,17 +53,12 @@ public class ModelBuilder {
 			ModelNode mn = mns[i] = new ModelNode();
 			modelNodes.put(n, mn);
 			mn.id = n.node_name;
-			Matrix4 me = n.worldPosition;
 
 			if (n.parent < 0 || n.parent >= file.scene.nodes.length) {
 				model.nodes.add(mn);
-			} else {
-				TMD_Node p = n.parentRef;
-				Matrix4 inv = new Matrix4(p.worldPosition).inv();
-				me = inv.mul(me);
 			}
-			me.getTranslation(mn.translation = new Vector3());
-			me.getRotation(mn.rotation = new Quaternion());
+			n.localPosition.getTranslation(mn.translation = new Vector3());
+			n.localPosition.getRotation(mn.rotation = new Quaternion());
 		}
 
 		for (int i = 0; i < file.scene.nodes.length; i++) {
@@ -78,14 +78,41 @@ public class ModelBuilder {
 		for (TMD_Mesh m : file.meshes.meshes) {
 			m.loadVtxAndTri();
 
+			int[] derefVert = new int[file.scene.nodes.length];
+			Arrays.fill(derefVert, -1);
+			for (int i = 0; i < m.meshParentsRef.length; i++)
+				derefVert[m.meshParents[i]] = i;
+
 			ModelMesh mm = new ModelMesh();
 			mm.id = "m_" + m.hashCode();
-			for (int n : m.meshParents) {
-				TMD_Node basis = file.scene.nodes[n];
+			{
+				ModelNode at = null;
+				ModelNode fake = null;
+				if (m.isSkinned()) {
+					TMD_Node basis = file.scene.nodes[0];
+					fake = at = modelNodes.get(basis);
+					fake = new ModelNode();
+					fake.id = "mesh_alias_" + mm.id + "_" + System.nanoTime();
+					{
+						Matrix4 inv = new Matrix4(basis.worldPosition).inv();
+						inv.getTranslation(fake.translation = new Vector3());
+						inv.getRotation(fake.rotation = new Quaternion());
+					}
+				} else {
+					for (int n : m.meshParents) {
+						TMD_Node basis = file.scene.nodes[n];
 
-				ModelNode at = modelNodes.get(basis);
-				ModelNode fake = new ModelNode();
-				{
+						at = modelNodes.get(basis);
+						fake = new ModelNode();
+						fake.id = "mesh_alias_" + n + "_" + mm.id + "_" + System.nanoTime();
+						{
+							Matrix4 inv = new Matrix4(basis.worldPosition).inv();
+							inv.getTranslation(fake.translation = new Vector3());
+							inv.getRotation(fake.rotation = new Quaternion());
+						}
+					}
+				}
+				if (fake != at) {
 					if (at.children == null)
 						at.children = new ModelNode[1];
 					else
@@ -93,23 +120,32 @@ public class ModelBuilder {
 					at.children[at.children.length - 1] = fake;
 				}
 
-				fake.id = "mesh_alias_" + n + "_" + mm.id + "_" + System.nanoTime();
-				{
-					Matrix4 inv = new Matrix4(basis.worldPosition).inv();
-					inv.getTranslation(fake.translation = new Vector3());
-					inv.getRotation(fake.rotation = new Quaternion());
-				}
 				fake.meshId = mm.id;
 				fake.parts = new ModelNodePart[1];
 				fake.parts[0] = new ModelNodePart();
 				fake.parts[0].meshPartId = m.hashCode() + "_main";
 				fake.parts[0].materialId = m.material_name;
+				if (m.isSkinned()) {
+					fake.parts[0].bones = new ArrayMap<>();
+					for (int i = 0; i < m.meshParentsRef.length; i++) {
+						TMD_Node node = m.meshParentsRef[i];
+						// output == node position * inv(skinning matrix) * vertex
+						fake.parts[0].bones.put(node.node_name, new Matrix4(node.worldPosition));
+					}
+				}
 				mats.add(m.material_name);
 			}
 
-			mm.attributes = new VertexAttribute[] { VertexAttribute.Position(), VertexAttribute.Normal(),
-					VertexAttribute.TexCoords(0) };
-			int vsize = 3 + 3 + 2;
+			int vsize;
+			if (m.isSkinned()) {
+				mm.attributes = new VertexAttribute[] { VertexAttribute.Position(), VertexAttribute.Normal(),
+						VertexAttribute.TexCoords(0), VertexAttribute.BoneWeight(0), VertexAttribute.BoneWeight(1) };
+				vsize = 3 + 3 + 2 + 4;
+			} else {
+				mm.attributes = new VertexAttribute[] { VertexAttribute.Position(), VertexAttribute.Normal(),
+						VertexAttribute.TexCoords(0) };
+				vsize = 3 + 3 + 2;
+			}
 			mm.vertices = new float[vsize * m.verts.length];
 			for (int i = 0; i < m.verts.length; i++) {
 				Vertex v = m.verts[i];
@@ -122,6 +158,12 @@ public class ModelBuilder {
 				mm.vertices[o + 5] = v.normal.z;
 				mm.vertices[o + 6] = v.texpos.x;
 				mm.vertices[o + 7] = v.texpos.y;
+				if (m.isSkinned()) {
+					mm.vertices[o + 8] = derefVert[v.primaryBone];
+					mm.vertices[o + 9] = v.primaryBoneAlpha;
+					mm.vertices[o + 10] = derefVert[v.secondaryBone];
+					mm.vertices[o + 11] = 1 - v.primaryBoneAlpha;
+				}
 			}
 			mm.parts = new ModelMeshPart[1];
 			mm.parts[0] = new ModelMeshPart();
@@ -143,6 +185,34 @@ public class ModelBuilder {
 			model.materials.add(def);
 		}
 
+		for (TMD_Animation a : file.scene.animations.animations) {
+			ModelAnimation anim = new ModelAnimation();
+			anim.id = a.name;
+			anim.nodeAnimations = new Array<>();
+			for (TMD_Channel c : a.channels) {
+				if (c.nodeRef == null)
+					continue;
+				ModelNodeAnimation mna = new ModelNodeAnimation();
+				mna.nodeId = modelNodes.get(c.nodeRef).id;
+				mna.translation = new Array<>();
+				mna.rotation = new Array<>();
+				for (TMD_KeyFrame frame : c.frames) {
+					ModelNodeKeyframe<Vector3> pos = new ModelNodeKeyframe<>();
+					pos.keytime = frame.time;
+					pos.value = new Vector3(frame.localPos);
+
+					ModelNodeKeyframe<Quaternion> rot = new ModelNodeKeyframe<>();
+					rot.keytime = frame.time;
+					rot.value = new Quaternion(frame.localRot);
+
+					mna.translation.add(pos);
+					mna.rotation.add(rot);
+				}
+				anim.nodeAnimations.add(mna);
+			}
+			model.animations.add(anim);
+		}
+
 		File out = new File(Base.BASE_OUT, "Data/Models/" + file.category.toLowerCase() + "/" + id + ".g3dj");
 		out.getParentFile().mkdirs();
 		JSONObject ff = new JSONObject();
@@ -154,93 +224,5 @@ public class ModelBuilder {
 		ww.close();
 		G3dModelLoader loader = new G3dModelLoader(new JsonReader());
 		ModelData output = loader.loadModelData(new FileHandle(out));
-
-		// {
-		// PrintStream wr = new PrintStream(new
-		// FileOutputStream("C:/Users/westin/Downloads/test.stl"));
-		// wr.println("solid test");
-		// for (ModelNode node : output.nodes)
-		// dumpSTL(wr, output, node, new Vector3());
-		// wr.println("endsolid test");
-		// wr.close();
-		// }
-		//
-		// int i = 0;
-		// for (ModelMesh mm : output.meshes) {
-		// PrintStream wr = new PrintStream(new
-		// FileOutputStream("C:/Users/westin/Downloads/test_mesh_" + i +
-		// ".stl"));
-		// wr.println("solid test");
-		// dumpSTL(wr, mm, new Vector3());
-		// wr.println("endsolid test");
-		// wr.close();
-		// i++;
-		// }
-	}
-
-	private static void dumpSTL(PrintStream wr, ModelMesh mesh, Vector3 base) {
-		for (ModelMeshPart mmp : mesh.parts) {
-			for (int i = 2; i < mmp.indices.length; i++) {
-				int ao = mmp.indices[i - 2] * (3 + 3 + 2);
-				int bo = mmp.indices[i - 1] * (3 + 3 + 2);
-				int co = mmp.indices[i - 0] * (3 + 3 + 2);
-
-				Vector3 a = new Vector3(mesh.vertices[ao], mesh.vertices[ao + 1], mesh.vertices[ao + 2]);
-				a = new Vector3(a).add(base);
-				Vector3 b = new Vector3(mesh.vertices[bo], mesh.vertices[bo + 1], mesh.vertices[bo + 2]);
-				b = new Vector3(b).add(base);
-				Vector3 c = new Vector3(mesh.vertices[co], mesh.vertices[co + 1], mesh.vertices[co + 2]);
-				c = new Vector3(c).add(base);
-				wr.println("facet normal 1 0 0");
-				wr.println("outer loop");
-				wr.println("vertex " + a.x + " " + a.y + " " + a.z);
-				wr.println("vertex " + b.x + " " + b.y + " " + b.z);
-				wr.println("vertex " + c.x + " " + c.y + " " + c.z);
-				wr.println("endloop");
-				wr.println("endfacet");
-			}
-		}
-	}
-
-	private static void dumpSTL(PrintStream wr, ModelData model, ModelNode node, Vector3 base) {
-		base = new Vector3(base);
-		if (node.translation != null)
-			base.add(node.translation);
-		if (node.meshId != null) {
-			ModelMesh mesh = null;
-			for (ModelMesh m : model.meshes)
-				if (m.id.equals(node.meshId))
-					mesh = m;
-			for (ModelNodePart part : node.parts) {
-				ModelMeshPart mmp = null;
-				for (ModelMeshPart p : mesh.parts)
-					if (p.id.equals(part.meshPartId))
-						mmp = p;
-
-				for (int i = 2; i < mmp.indices.length; i++) {
-					int ao = mmp.indices[i - 2] * (3 + 3 + 2);
-					int bo = mmp.indices[i - 1] * (3 + 3 + 2);
-					int co = mmp.indices[i - 0] * (3 + 3 + 2);
-
-					Vector3 a = new Vector3(mesh.vertices[ao], mesh.vertices[ao + 1], mesh.vertices[ao + 2]);
-					a = new Vector3(a).add(base);
-					Vector3 b = new Vector3(mesh.vertices[bo], mesh.vertices[bo + 1], mesh.vertices[bo + 2]);
-					b = new Vector3(b).add(base);
-					Vector3 c = new Vector3(mesh.vertices[co], mesh.vertices[co + 1], mesh.vertices[co + 2]);
-					c = new Vector3(c).add(base);
-					wr.println("facet normal 1 0 0");
-					wr.println("outer loop");
-					wr.println("vertex " + a.x + " " + a.y + " " + a.z);
-					wr.println("vertex " + b.x + " " + b.y + " " + b.z);
-					wr.println("vertex " + c.x + " " + c.y + " " + c.z);
-					wr.println("endloop");
-					wr.println("endfacet");
-				}
-			}
-		}
-
-		if (node.children != null)
-			for (ModelNode c : node.children)
-				dumpSTL(wr, model, c, base);
 	}
 }

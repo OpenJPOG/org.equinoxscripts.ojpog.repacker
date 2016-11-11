@@ -3,7 +3,19 @@ package repacker.model;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
-public class TMD_IO {
+public abstract class TMD_IO {
+	public TMD_File file;
+
+	public TMD_IO(TMD_File file) {
+		this.file = file;
+	}
+
+	public TMD_IO() {
+	}
+
+	public void link() {
+	}
+
 	public static String readRaw(ByteBuffer b, int l) throws UnsupportedEncodingException {
 		byte[] tmp = new byte[l];
 		b.get(tmp);
