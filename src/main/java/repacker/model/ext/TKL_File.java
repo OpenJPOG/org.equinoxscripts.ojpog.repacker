@@ -63,6 +63,8 @@ public class TKL_File extends TMD_IO {
 		byte[] buffer = new byte[1024];
 		for (int i = Base.BASE_IN.length - 1; i >= 0; i--) {
 			File f = new File(Base.BASE_IN[i], "Data/Models/" + name);
+			if (!f.exists())
+				continue;
 			try {
 				ByteArrayOutputStream bos = new ByteArrayOutputStream();
 				FileInputStream fin = new FileInputStream(f);

@@ -9,8 +9,11 @@ import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 
 public class TMD_Node extends TMD_IO {
-	public TMD_Node(TMD_File file, ByteBuffer b, int id) throws UnsupportedEncodingException {
-		super(file);
+	private final TMD_Scene scene;
+
+	public TMD_Node(TMD_Scene scene, ByteBuffer b, int id) throws UnsupportedEncodingException {
+		super(scene.file);
+		this.scene = scene;
 		this.id = id;
 		Quaternion rotation = new Quaternion(b.getFloat(), b.getFloat(), b.getFloat(), b.getFloat());
 		this.worldSkinningMatrix = new Matrix4(floats(b, new float[16]));
@@ -22,27 +25,28 @@ public class TMD_Node extends TMD_IO {
 		this.noMesh = b.getShort();
 		// unkown
 		this.matrix2 = new Matrix4().set(new Vector3(b.getFloat(), b.getFloat(), b.getFloat()), rotation);
-		
+
 		// if we are skinned...
 		this.worldPosition = worldSkinningMatrix;// : matrix2;
-		this.worldPosition_Inv = worldSkinningMatrix_Inv;// : new Matrix4(worldPosition).inv();
-		
+		this.worldPosition_Inv = worldSkinningMatrix_Inv;// : new
+															// Matrix4(worldPosition).inv();
+
 		this.localPosition = new Matrix4();
 		this.localPosition_Inv = new Matrix4();
-		
+
 		this.localSkinningMatrix = new Matrix4();
 		this.localSkinningMatrix_Inv = new Matrix4();
 	}
 
 	public final int id;
 	public final Matrix4 worldPosition, worldPosition_Inv;
-	
+
 	public final Matrix4 localPosition, localPosition_Inv;
-	
+
 	public final Matrix4 worldSkinningMatrix, worldSkinningMatrix_Inv;
 	public final Matrix4 localSkinningMatrix, localSkinningMatrix_Inv;
 	public final Matrix4 matrix2;
-	
+
 	public final String node_name;
 	public final short parent;
 	/**
@@ -62,12 +66,12 @@ public class TMD_Node extends TMD_IO {
 	public void link() {
 		this.localPosition.set(worldPosition);
 		this.localSkinningMatrix.set(worldSkinningMatrix);
-		
+
 		if (parent >= 0) {
-			parentRef = file.scene.nodes[parent];
+			parentRef = scene.nodes[parent];
 			parentRef.childRef = Arrays.copyOf(parentRef.childRef, parentRef.childRef.length + 1);
 			parentRef.childRef[parentRef.childRef.length - 1] = this;
-			
+
 			this.localPosition.mulLeft(parentRef.worldPosition_Inv);
 			this.localSkinningMatrix.mulLeft(parentRef.worldSkinningMatrix_Inv);
 		}

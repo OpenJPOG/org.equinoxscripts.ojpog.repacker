@@ -5,7 +5,6 @@ import java.nio.ByteBuffer;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 
-import repacker.model.TMD_File;
 import repacker.model.TMD_IO;
 import repacker.model.TMD_Node;
 
@@ -17,12 +16,12 @@ public class TMD_Channel extends TMD_IO {
 
 	public int anim_NodeMeta;
 
-	public TMD_Channel(TMD_File file, ByteBuffer data) {
-		super(file);
+	public TMD_Channel(TMD_Animation animation, ByteBuffer data) {
+		super(animation.file);
 		this.unk1 = data.getShort();
 		this.frames = new TMD_KeyFrame[data.getShort() & 0xFFFF];
 		for (int i = 0; i < this.frames.length; i++)
-			this.frames[i] = new TMD_KeyFrame(file, data);
+			this.frames[i] = new TMD_KeyFrame(this, data);
 	}
 
 	@Override

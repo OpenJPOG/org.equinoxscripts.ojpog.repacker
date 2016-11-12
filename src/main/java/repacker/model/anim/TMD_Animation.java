@@ -10,30 +10,32 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 
-import repacker.model.TMD_File;
 import repacker.model.TMD_IO;
+import repacker.model.TMD_Scene;
 
 public class TMD_Animation extends TMD_IO {
 	public final String name;
 	public final float length;
+	/**
+	 * Number of nodes relevant to this animation?
+	 */
+	public final int unk1;
 	public final TMD_Channel[] channels;
+	public int scene_AnimMeta;
 
-	public TMD_Animation(TMD_File file, ByteBuffer data) throws UnsupportedEncodingException {
-		super(file);
+	public TMD_Animation(TMD_Scene scene, ByteBuffer data) throws UnsupportedEncodingException {
+		super(scene.file);
 		byte namelen = data.get();
-		name = read(data, 23);
-		int channelCount = data.getInt(); // not accurate
-		System.out.println(name + "\t" + channelCount);
-
+		name = read(data, 23).toLowerCase(); // rationalize the animation names
+		unk1 = data.getInt();
 		length = data.getFloat();
-		int[] nodeMeta = new int[file.scene.nodes.length];
+		int[] nodeMeta = new int[scene.nodes.length];
 		ints(data, nodeMeta);
-		channels = new TMD_Channel[file.scene.nodes.length];
+		channels = new TMD_Channel[scene.nodes.length];
 		for (int c = 0; c < channels.length; c++) {
-			channels[c] = new TMD_Channel(file, data);
+			channels[c] = new TMD_Channel(this, data);
 			channels[c].anim_NodeMeta = nodeMeta[c];
 		}
-		System.out.println();
 	}
 
 	@Override
@@ -43,7 +45,7 @@ public class TMD_Animation extends TMD_IO {
 
 		// Link nodeRef:
 		for (int i = 1; i < channels.length; i++)
-			channels[i].nodeRef = file.scene.nodes[i-1];
+			channels[i].nodeRef = file.scene.nodes[i - 1];
 
 		// Localize
 		// Make a set of all keyframe times
@@ -66,7 +68,7 @@ public class TMD_Animation extends TMD_IO {
 				if (channels[i].nodeRef == null)
 					continue;
 				frames[i] = channels[i].value(t, tmp3, tmpQ, false);
-				pose[i].set(tmp3, tmpQ);//.mulLeft(channels[i].nodeRef.localPosition);
+				pose[i].set(tmp3, tmpQ);// .mulLeft(channels[i].nodeRef.localPosition);
 			}
 			// Find matching frames.
 			for (int i = 0; i < channels.length; i++) {

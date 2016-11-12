@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,6 +14,7 @@ import java.util.Set;
 import org.json.simple.JSONObject;
 
 import com.badlogic.gdx.files.FileHandle;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL30;
 import com.badlogic.gdx.graphics.VertexAttribute;
 import com.badlogic.gdx.graphics.g3d.loader.G3dModelLoader;
@@ -41,6 +43,8 @@ import repacker.model.anim.TMD_Channel;
 import repacker.model.anim.TMD_KeyFrame;
 
 public class ModelBuilder {
+	public static final boolean paintBoneColors = false;
+
 	public static void write(String id, TMD_File file) throws IOException {
 		ModelData model = new ModelData();
 		model.id = id;
@@ -137,13 +141,31 @@ public class ModelBuilder {
 
 			int vsize;
 			if (m.isSkinned()) {
-				mm.attributes = new VertexAttribute[] { VertexAttribute.Position(), VertexAttribute.Normal(),
-						VertexAttribute.TexCoords(0), VertexAttribute.BoneWeight(0), VertexAttribute.BoneWeight(1) };
-				vsize = 3 + 3 + 2 + 4;
+				mm.attributes = new VertexAttribute[3 + m.maxBindingsPerVertex];
+				mm.attributes[0] = VertexAttribute.Position();
+				mm.attributes[1] = VertexAttribute.Normal();
+				mm.attributes[2] = VertexAttribute.TexCoords(0);
+				for (int i = 0; i < m.maxBindingsPerVertex; i++)
+					mm.attributes[3 + i] = VertexAttribute.BoneWeight(i);
+				vsize = 3 + 3 + 2 + 2 * m.maxBindingsPerVertex;
 			} else {
 				mm.attributes = new VertexAttribute[] { VertexAttribute.Position(), VertexAttribute.Normal(),
 						VertexAttribute.TexCoords(0) };
 				vsize = 3 + 3 + 2;
+			}
+
+			Map<Long, Color> boneColors = new HashMap<>();
+			if (paintBoneColors) {
+				mm.attributes = new VertexAttribute[] { VertexAttribute.Position(), VertexAttribute.Normal(),
+						VertexAttribute.ColorUnpacked() };
+				vsize = 3 + 3 + 4;
+
+				Color[] map = new Color[] { Color.RED, Color.BLUE, Color.GOLD, Color.YELLOW, Color.PINK };
+				for (Vertex v : m.verts) {
+					long key = ByteBuffer.wrap(v.skinningInfo).getLong();
+					if (!boneColors.containsKey(key))
+						boneColors.put(key, map[boneColors.size() % map.length]);
+				}
 			}
 
 			mm.vertices = new float[vsize * m.verts.length];
@@ -156,19 +178,28 @@ public class ModelBuilder {
 				mm.vertices[o + 3] = v.normal.x;
 				mm.vertices[o + 4] = v.normal.y;
 				mm.vertices[o + 5] = v.normal.z;
-				mm.vertices[o + 6] = v.texpos.x;
-				mm.vertices[o + 7] = v.texpos.y;
-				if (m.isSkinned()) {
-					mm.vertices[o + 8] = derefVert[v.primaryBone];
-					mm.vertices[o + 9] = v.primaryBoneAlpha;
-					mm.vertices[o + 10] = derefVert[v.secondaryBone];
-					mm.vertices[o + 11] = 1 - v.primaryBoneAlpha;
-					if (!Float.isFinite(v.primaryBoneAlpha) || v.primaryBoneAlpha < 0 || v.primaryBoneAlpha > 1)
-						System.err.println("Invalid bone alpha");
-					if (mm.vertices[o + 8] < 0 || mm.vertices[o + 8] >= m.meshParents.length)
-						System.err.println("Bad primary bone");
-					if (mm.vertices[o + 10] < 0 || mm.vertices[o + 10] >= m.meshParents.length)
-						System.err.println("Bad secondary bone");
+				if (paintBoneColors) {
+					long key = ByteBuffer.wrap(v.skinningInfo).getLong();
+					Color c = boneColors.get(key);
+					mm.vertices[o + 6] = c.r;
+					mm.vertices[o + 7] = c.g;
+					mm.vertices[o + 8] = c.b;
+					mm.vertices[o + 9] = c.a;
+				} else {
+					mm.vertices[o + 6] = v.texpos.x;
+					mm.vertices[o + 7] = v.texpos.y;
+					if (m.isSkinned()) {
+						for (int b = 0; b < m.maxBindingsPerVertex; b++) {
+							int bid = b < v.bones.length ? v.bones[b] : 0;
+							float bw = b < v.boneWeight.length ? v.boneWeight[b] : 0;
+							mm.vertices[o + 8 + b * 2] = bid;
+							mm.vertices[o + 9 + b * 2] = bw;
+							if (!Float.isFinite(bw) || bw < 0 || bw > 1)
+								System.err.println("Invalid bone alpha");
+							if (bid < 0 || bid >= m.meshParents.length)
+								System.err.println("Invalid bone ID");
+						}
+					}
 				}
 			}
 			mm.parts = new ModelMeshPart[1];
@@ -179,7 +210,9 @@ public class ModelBuilder {
 			model.meshes.add(mm);
 		}
 
-		for (String mat : mats) {
+		for (
+
+		String mat : mats) {
 			ModelMaterial def = new ModelMaterial();
 			def.id = mat;
 			ModelTexture tex = new ModelTexture();
@@ -191,7 +224,7 @@ public class ModelBuilder {
 			model.materials.add(def);
 		}
 
-		for (TMD_Animation a : file.scene.animations.animations) {
+		for (TMD_Animation a : file.scene.animations) {
 			ModelAnimation anim = new ModelAnimation();
 			anim.id = a.name;
 			anim.nodeAnimations = new Array<>();

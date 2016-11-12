@@ -30,8 +30,7 @@ public class TMD_File extends TMD_IO {
 		data.get(unk2);
 		data.get(unk3);
 
-		this.scene = new TMD_Scene(this);
-		this.scene.load(data);
+		this.scene = new TMD_Scene(this, data);
 		this.meshes = new TMD_MeshBlock(this, data);
 
 		this.link();

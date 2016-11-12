@@ -4,52 +4,52 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.function.Function;
 
-import repacker.model.anim.TMD_AnimationBlock;
+import repacker.model.anim.TMD_Animation;
 
 public class TMD_Scene extends TMD_IO {
 	public final byte[] unk2_Zero = new byte[42];
 	public final byte[] unk3 = new byte[4];
 	public final int[] unk4 = new int[9];
 	public final int[] unk5 = new int[4];
-	public TMD_Node[] nodes;
+	public final int unk6;
+	public final TMD_Node[] nodes;
+	public final TMD_Animation[] animations;
+	public final short unkS1, unkS3;
 
-	public int[] unk6;
-	public TMD_AnimationBlock animations;
-
-	public TMD_Scene load(ByteBuffer data) throws UnsupportedEncodingException {
+	public TMD_Scene(TMD_File file, ByteBuffer data) throws UnsupportedEncodingException {
+		super(file);
 		data.position(0x40);
+		data.limit(0x40 + data.getInt(0x1C));
 		short numNodes = data.getShort();
-		short unkS1 = data.getShort();
-		short numUnk6 = data.getShort();
-		short unkS3 = data.getShort();
+		unkS1 = data.getShort();
+		short numAnimations = data.getShort();
+		unkS3 = data.getShort();
 		data.get(unk2_Zero);
 		data.get(unk3);
 		nodes = new TMD_Node[numNodes];
 		for (int i = 0; i < numNodes; i++) {
 			data.position(0x7C + i * 0xB0);
-			nodes[i] = new TMD_Node(file, data, i);
+			nodes[i] = new TMD_Node(this, data, i);
 		}
 		for (TMD_Node n : nodes)
 			n.link();
 		data.position(0x7C + numNodes * 0xB0);
-		int offs = 0x3C + data.getInt(0x1C) + 4;
-		System.out.println(unkS1 + " " + numUnk6 + " " + unkS3);
-		unk6 = new int[numUnk6];
-		ints(data, unk6);
-		animations = new TMD_AnimationBlock(file, data);
-		System.out.println("Anim end " + data.position() + " v " + offs);
-		return this;
-	}
-
-	public TMD_Scene(TMD_File file) throws UnsupportedEncodingException {
-		super(file);
+		int[] animationMeta = new int[numAnimations];
+		ints(data, animationMeta);
+		animations = new TMD_Animation[numAnimations];
+		for (int i = 0; i < animations.length; i++) {
+			animations[i] = new TMD_Animation(this, data);
+			animations[i].scene_AnimMeta = animationMeta[i];
+		}
+		unk6 = data.getInt();
+		data.limit(data.capacity());
 	}
 
 	@Override
 	public void link() {
-//		for (TMD_Node n : nodes)
-//			n.link();
-		animations.link();
+		// Nodes are linked in constructor.
+		for (TMD_Animation a : animations)
+			a.link();
 	}
 
 	private int calcMaxLen(TMD_Node node, String indent) {

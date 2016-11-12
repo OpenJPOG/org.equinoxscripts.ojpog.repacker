@@ -29,8 +29,8 @@ public class TMD_Mesh extends TMD_IO {
 		public final Vector3 position, normal;
 		public final byte[] skinningInfo = new byte[8];
 
-		public int primaryBone, secondaryBone;
-		public float primaryBoneAlpha;
+		public int[] bones;
+		public float[] boneWeight;
 
 		public final Vector2 texpos;
 	}
@@ -39,6 +39,7 @@ public class TMD_Mesh extends TMD_IO {
 	// this seems to be a bone mapping, NOT a nodes-with-this-mesh mapping
 	public final int[] meshParents;
 	public final TMD_Node[] meshParentsRef;
+	public int[] meshParentInverse;
 	public final String material_name;
 	public final short[] tri_strip;
 
@@ -51,6 +52,8 @@ public class TMD_Mesh extends TMD_IO {
 	public final byte[] unk1 = new byte[4];
 	public final byte[] unk2 = new byte[8];
 	public final byte[] unk3 = new byte[4];
+
+	public int maxBindingsPerVertex;
 
 	public boolean isSkinned() {
 		return meshParents.length > 1;
@@ -110,9 +113,16 @@ public class TMD_Mesh extends TMD_IO {
 	}
 
 	private final boolean useBoneGlow = false;
+	private final boolean useNearestBone = false;
+	private final boolean useEmbedded = true;
 
 	@Override
 	public void link() {
+		meshParentInverse = new int[file.scene.nodes.length];
+		Arrays.fill(meshParentInverse, -1);
+		for (int i = 0; i < meshParents.length; i++)
+			meshParentInverse[meshParents[i]] = i;
+
 		for (int i = 0; i < meshParents.length; i++)
 			meshParentsRef[i] = file.scene.nodes[meshParents[i]];
 
@@ -125,8 +135,8 @@ public class TMD_Mesh extends TMD_IO {
 			if (fixed.contains(v))
 				continue;
 			if (meshParentsRef.length == 1) {
-				v.secondaryBone = v.primaryBone = meshParentsRef[0].id;
-				v.primaryBoneAlpha = 1;
+				v.bones = new int[] { 0 };
+				v.boneWeight = new float[] { 1 };
 			} else if (useBoneGlow) {
 				// Nodes with equal positions must have identical weighting.
 				Set<TMD_Mesh.Vertex> mine = new HashSet<>();
@@ -196,25 +206,23 @@ public class TMD_Mesh extends TMD_IO {
 					}
 				});
 				// two bones per vertex.
-				v.primaryBone = (int) sts[0][0];
+				v.bones = new int[] { (int) sts[0][0], (int) sts[1][0] };
 				float pbw = (float) sts[0][1] + 1;
-				v.secondaryBone = (int) sts[1][0];
 				float sbw = (float) sts[1][1] + 1;
-				v.primaryBoneAlpha = pbw / (pbw + sbw);
+				v.boneWeight = new float[] { pbw / (pbw + sbw), sbw / (pbw + sbw) };
 
 				fixed.addAll(mine);
 				for (TMD_Mesh.Vertex vp : mine) {
-					vp.primaryBone = v.primaryBone;
-					vp.secondaryBone = v.secondaryBone;
-					vp.primaryBoneAlpha = v.primaryBoneAlpha;
+					vp.bones = v.bones;
+					vp.boneWeight = v.boneWeight;
 				}
-			} else {
-				TMD_Node bestNode = null;
+			} else if (useNearestBone) {
+				int bestNode = -1;
 				float bestDist = Float.MAX_VALUE;
-				TMD_Node secondBestNode = null;
+				int secondBestNode = -1;
 				float secondBestDist = Float.MAX_VALUE;
 
-				for (int b = 1; b < meshParents.length; b++) {
+				for (int b = 0; b < meshParents.length; b++) {
 					if (meshParentsRef[b].parentRef != null) {
 						Vector3 start = meshParentsRef[b].worldPosition.getTranslation(new Vector3());
 						Vector3 end = meshParentsRef[b].parentRef.worldPosition.getTranslation(new Vector3());
@@ -226,10 +234,10 @@ public class TMD_Mesh extends TMD_IO {
 						len *= 5 + crs;
 						if (len < secondBestDist) {
 							secondBestDist = len;
-							secondBestNode = meshParentsRef[b];
+							secondBestNode = b;
 						}
 						if (secondBestDist < bestDist) {
-							TMD_Node tn = bestNode;
+							int tn = bestNode;
 							float td = bestDist;
 							bestDist = secondBestDist;
 							bestNode = secondBestNode;
@@ -238,12 +246,28 @@ public class TMD_Mesh extends TMD_IO {
 						}
 					}
 				}
-				v.primaryBone = bestNode.id;
-				v.secondaryBone = secondBestNode.id;
+				v.bones = new int[] { bestNode, secondBestNode };
 				float pbw = (float) Math.exp(-bestDist);
 				float sbw = (float) Math.exp(-secondBestDist);
-				v.primaryBoneAlpha = pbw / (pbw + sbw);
+				v.boneWeight = new float[] { pbw / (pbw + sbw), sbw / (pbw + sbw) };
+			} else if (useEmbedded) {
+				// System.out.println(ModelExtractor.hex(v.skinningInfo));
+				// laid out as 4 weights, 4 bones.
+				int count = 0;
+				while (count < 4 && v.skinningInfo[count] != 0)
+					count++;
+				v.bones = new int[count];
+				v.boneWeight = new float[count];
+				for (int i = 0; i < count; i++) {
+					v.bones[i] = (v.skinningInfo[4 + i] & 0xFF) / 3;
+					v.boneWeight[i] = (v.skinningInfo[i] & 0xFF) / 255f;
+				}
 			}
+		}
+
+		maxBindingsPerVertex = 0;
+		for (Vertex v : verts) {
+			maxBindingsPerVertex = Math.max(maxBindingsPerVertex, v.bones.length);
 		}
 	}
 }
