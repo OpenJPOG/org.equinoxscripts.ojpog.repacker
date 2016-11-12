@@ -4,21 +4,28 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
 public class TMD_MeshBlock extends TMD_IO {
-	public final byte[] unk1 = new byte[4];
-	public final byte[] unk2 = new byte[4 * 5];
 	public final TMD_Mesh[] meshes;
+	public final int unk1;
 
 	public TMD_MeshBlock(TMD_File file, ByteBuffer data) throws UnsupportedEncodingException {
 		super(file);
-		int offs = 0x3C + data.getInt(0x1C) + 4;
+		int offs = TMD_File.SCENE_BLOCK_OFFSET + file.sceneBlockSize;
 		data.position(offs);
-		data.get(unk1);
-		int num_meshes = data.getInt();
-		data.get(unk2);
+		// This isn't always there: what is it?
+		this.unk1 = data.getInt();
+		System.err.println(ModelExtractor.pad(Integer.toBinaryString(unk1), 32));
 
-		meshes = new TMD_Mesh[num_meshes];
-		for (int i = 0; i < num_meshes; i++) {
-			meshes[i] = new TMD_Mesh(file, data);
+		meshes = new TMD_Mesh[file.scene.meshCount];
+		for (int i = 0; i < meshes.length; i++) {
+			int s = data.position();
+			try {
+				meshes[i] = new TMD_Mesh(file, data);
+			} catch (Exception e) {
+				System.err.println("Failed to read mesh #" + i + " at offset=" + s + " (block offset is " + offs + ")");
+				if (e instanceof RuntimeException)
+					throw (RuntimeException) e;
+				throw new RuntimeException(e);
+			}
 		}
 	}
 

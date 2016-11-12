@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.badlogic.gdx.math.Quaternion;
@@ -75,35 +76,44 @@ public class ModelExtractor {
 	}
 
 	// skinned; { "dc", "dhbja", "djb", "dma", "dmbt", "df", "dha" }
-	private static final String[] FIND_CATS = {};// { "dc", "dhbja", "djb",
-													// "dma", "dmbt", "df",
-													// "dha" };
+	private static final String[] FIND_CATS = {};// "dc", "dhbja", "djb", "dma",
+													// "dmbt", "df", "dha" };
+
+	private static final String[] DINOS = { "Acro_hi.tmd", "Dilopho_hi.tmd", "Alberto_hi.tmd", "Allo_hi.tmd",
+			"Anky_hi.tmd", "Brach_hi.tmd", "Camara_hi.tmd", "Carcha_hi.tmd", "Cerato_hi.tmd", "Cory_hi.tmd",
+			"Galli_hi.tmd", "Goat.tmd", "Cow.tmd", "Homalo_hi.tmd", "Pachy_hi.tmd", "Para_hi.tmd", "Raptor_hi.tmd",
+			"Steg_hi.tmd", "Styrac_hi.tmd", "TRex_hi.tmd" };
 
 	public static void main(String[] args) throws IOException, InterruptedException {
 		for (File base_input : Base.BASE_IN) {
 			for (File f : new File(base_input, "Data/Models").listFiles()) {
-				String[] find = { "Dilopho_hi.tmd", "Camara_hi.tmd", "WelcCntr_hi.tmd"};
+				String[] find = {};// { "Alberto_hi.tmd" };// , "Cory_hi.tmd",
+									// "Allo_hi.tmd" };//
+									// DINOS;
 				Stream<String> findS = Arrays.stream(find);
 				if (f.getName().endsWith(".tmd") && (find.length == 0
 						|| findS.map(s -> f.getName().contains(s)).filter(s -> s).findAny().isPresent())) {
 					try {
 						ByteBuffer data = Utils.read(f);
-						TMD_File file = new TMD_File(data);
+						TMD_File file = new TMD_File(f.getName().substring(0,f.getName().length()-4), data);
 						if (FIND_CATS.length > 0 && !Arrays.stream(FIND_CATS)
 								.filter(s -> file.category.equalsIgnoreCase(s)).findAny().isPresent())
 							continue;
-						// System.out.println("Read " + f);
-						// System.out.println("unkS1=" + file.scene.unkS1 + "
-						// unkS3=" + file.scene.unkS3);
-						System.out.println(rpad(f.getName(), 32) + pad(file.scene.animations[0].unk1 + "", 4) + " "
-								+ pad(file.scene.animations[0].scene_AnimMeta + "", 8) + "\t"
-								+ file.scene.nodes.length);
+//						if (data.hasRemaining())
+//							System.out.println(file.scene.unkS1 + "\t" + file.meshes.unk1);
+//						System.out.println("Read: " + f + ", leftover " + data.remaining());
+//						System.out.println(file.scene.unkS1 + "\t" + ModelExtractor.hex(file.scene.unk2_Zero) + ", "
+//								+ ModelExtractor.hex(file.scene.unk3) + ", " + Arrays.toString(file.scene.unk4) + ", "
+//								+ Arrays.toString(file.scene.unk5));
+						// System.out.println("Max length " +
+						// TMD_Animation.maxNameLen);
+						if (1 == 1)
+							continue;
+
 						for (TMD_Animation a : file.scene.animations) {
-							// System.out.println(rpad(a.name, 16) +
-							// pad(Integer.toHexString(a.unk1), 8) + " "
-							// + Integer.toBinaryString(a.scene_AnimMeta));
-							if (1 != 0)
-								break;
+							if (!f.getName().equals("WelcCntr_hi.tmd") && !a.name.equalsIgnoreCase("idle_post_lp"))
+								continue;
+							System.out.println(a.name + "\t" + a.unk1 + "\t" + a.scene_AnimMeta);
 							for (TMD_Channel c : a.channels) {
 								TMD_Node n = c.nodeRef;
 								if (n == null)
@@ -115,31 +125,23 @@ public class ModelExtractor {
 								if (n.node_name.startsWith("T_") || n.node_name.startsWith("D_")
 										|| n.node_name.startsWith("L_"))
 									continue;
-								System.out.println(n.node_name);
-								System.out.println(tmp3 + "\tANIM: " + Arrays.stream(c.frames)
-										.map(ha -> ha.localPos.toString()).reduce((ff, b) -> ff + ", " + b).get());
-								System.out.println(tmpQ + "\tANIM: " + Arrays.stream(c.frames)
-										.map(ha -> ha.localRot.toString()).reduce((ff, b) -> ff + ", " + b).get());
-
-								// c.value(0, tmp3, tmpQ, true);
-								// Matrix4 tmp = new Matrix4().set(tmp3, tmpQ);
-								// System.out.println(n.node_name);
-								// System.out.println(n.localPosition);
-								// System.out.println(tmp);
+								System.out.println(
+										n.node_name + "\t" + c.unk1 + "\t" + Integer.toHexString(c.anim_NodeMeta));
+								System.out.print(Arrays.stream(c.frames).mapToDouble(ha -> ha.localPos.dst(tmp3)).min()
+										.getAsDouble() + "\t");
+								System.out.println(Arrays.stream(c.frames)
+										.mapToDouble(
+												ha -> new Quaternion(tmpQ).conjugate().mulLeft(ha.localRot).getAngle())
+										.min().getAsDouble() + " deg");
 							}
 							System.out.println();
 						}
 
-						// System.out.println(file.scene.nodes.length + "\t" +
-						// Arrays.toString(file.scene.nodes));
-						// for (TMD_Mesh m : file.meshes.meshes)
-						// System.out.println(m.meshParents.length + "\t" +
-						// Arrays.toString(m.meshParentsRef));
-						// System.out.println();
-
 						ModelBuilder.write(f.getName().substring(0, f.getName().length() - 4), file);
 					} catch (Exception e) {
+						System.err.println("Err reading " + f);
 						e.printStackTrace();
+						Thread.sleep(1000);
 					}
 				}
 			}

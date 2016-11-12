@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,7 +13,6 @@ import java.util.Set;
 import org.json.simple.JSONObject;
 
 import com.badlogic.gdx.files.FileHandle;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL30;
 import com.badlogic.gdx.graphics.VertexAttribute;
 import com.badlogic.gdx.graphics.g3d.loader.G3dModelLoader;
@@ -37,14 +35,11 @@ import com.badlogic.gdx.utils.JsonReader;
 
 import repacker.Base;
 import repacker.G3DModelWriter;
-import repacker.model.TMD_Mesh.Vertex;
 import repacker.model.anim.TMD_Animation;
 import repacker.model.anim.TMD_Channel;
 import repacker.model.anim.TMD_KeyFrame;
 
 public class ModelBuilder {
-	public static final boolean paintBoneColors = false;
-
 	public static void write(String id, TMD_File file) throws IOException {
 		ModelData model = new ModelData();
 		model.id = id;
@@ -79,140 +74,46 @@ public class ModelBuilder {
 		}
 
 		Set<String> mats = new HashSet<String>();
-		for (TMD_Mesh m : file.meshes.meshes) {
-			m.loadVtxAndTri();
-
-			int[] derefVert = new int[file.scene.nodes.length];
-			Arrays.fill(derefVert, -1);
-			for (int i = 0; i < m.meshParentsRef.length; i++)
-				derefVert[m.meshParents[i]] = i;
-
-			ModelMesh mm = new ModelMesh();
-			mm.id = "m_" + m.hashCode();
+		{
+			ModelNode root = model.nodes.get(0);
+			int aliasOffset = root.children.length;
+			root.children = Arrays.copyOf(root.children, root.children.length + file.meshes.meshes.length);
+			Vector3 aliasTranslation;
+			Quaternion aliasRotation;
 			{
-				ModelNode at = null;
-				ModelNode fake = null;
-				if (m.isSkinned()) {
-					TMD_Node basis = file.scene.nodes[0];
-					fake = at = modelNodes.get(basis);
-					fake = new ModelNode();
-					fake.id = "mesh_alias_" + mm.id + "_" + System.nanoTime();
-					{
-						Matrix4 inv = new Matrix4(basis.worldPosition).inv();
-						inv.getTranslation(fake.translation = new Vector3());
-						inv.getRotation(fake.rotation = new Quaternion());
-					}
-				} else {
-					for (int n : m.meshParents) {
-						TMD_Node basis = file.scene.nodes[n];
-
-						at = modelNodes.get(basis);
-						fake = new ModelNode();
-						fake.id = "mesh_alias_" + n + "_" + mm.id + "_" + System.nanoTime();
-						{
-							Matrix4 inv = new Matrix4(basis.worldPosition).inv();
-							inv.getTranslation(fake.translation = new Vector3());
-							inv.getRotation(fake.rotation = new Quaternion());
-						}
-					}
-				}
-				if (fake != at) {
-					if (at.children == null)
-						at.children = new ModelNode[1];
-					else
-						at.children = Arrays.copyOf(at.children, at.children.length + 1);
-					at.children[at.children.length - 1] = fake;
-				}
-
-				fake.meshId = mm.id;
-				fake.parts = new ModelNodePart[1];
-				fake.parts[0] = new ModelNodePart();
-				fake.parts[0].meshPartId = m.hashCode() + "_main";
-				fake.parts[0].materialId = m.material_name;
-				if (m.isSkinned()) {
-					fake.parts[0].bones = new ArrayMap<>();
-					for (int i = 0; i < m.meshParentsRef.length; i++) {
-						TMD_Node node = m.meshParentsRef[i];
-						fake.parts[0].bones.put(node.node_name, new Matrix4(node.worldPosition));
-					}
-				}
-				mats.add(m.material_name);
+				Matrix4 inv = new Matrix4().set(root.translation, root.rotation).inv();
+				inv.getTranslation(aliasTranslation = new Vector3());
+				inv.getRotation(aliasRotation = new Quaternion());
 			}
 
-			int vsize;
-			if (m.isSkinned()) {
-				mm.attributes = new VertexAttribute[3 + m.maxBindingsPerVertex];
-				mm.attributes[0] = VertexAttribute.Position();
-				mm.attributes[1] = VertexAttribute.Normal();
-				mm.attributes[2] = VertexAttribute.TexCoords(0);
-				for (int i = 0; i < m.maxBindingsPerVertex; i++)
-					mm.attributes[3 + i] = VertexAttribute.BoneWeight(i);
-				vsize = 3 + 3 + 2 + 2 * m.maxBindingsPerVertex;
-			} else {
-				mm.attributes = new VertexAttribute[] { VertexAttribute.Position(), VertexAttribute.Normal(),
-						VertexAttribute.TexCoords(0) };
-				vsize = 3 + 3 + 2;
-			}
+			for (int meshID = 0; meshID < file.meshes.meshes.length; meshID++) {
+				TMD_Mesh mesh = file.meshes.meshes[meshID];
+				mats.add(mesh.material_name);
+				model.meshes.add(makeMesh(mesh));
 
-			Map<Long, Color> boneColors = new HashMap<>();
-			if (paintBoneColors) {
-				mm.attributes = new VertexAttribute[] { VertexAttribute.Position(), VertexAttribute.Normal(),
-						VertexAttribute.ColorUnpacked() };
-				vsize = 3 + 3 + 4;
+				ModelNode alias = root.children[aliasOffset + meshID] = new ModelNode();
+				alias.id = "mesh_alias_" + mesh.hashCode();
+				alias.translation = new Vector3(aliasTranslation);
+				alias.rotation = new Quaternion(aliasRotation);
+				alias.meshId = "m_" + mesh.hashCode();
 
-				Color[] map = new Color[] { Color.RED, Color.BLUE, Color.GOLD, Color.YELLOW, Color.PINK };
-				for (Vertex v : m.verts) {
-					long key = ByteBuffer.wrap(v.skinningInfo).getLong();
-					if (!boneColors.containsKey(key))
-						boneColors.put(key, map[boneColors.size() % map.length]);
-				}
-			}
+				root.parts = new ModelNodePart[mesh.pieces.length];
+				for (int pieceID = 0; pieceID < mesh.pieces.length; pieceID++) {
+					TMD_Mesh_Piece piece = mesh.pieces[pieceID];
+					ModelNodePart part = root.parts[pieceID] = new ModelNodePart();
 
-			mm.vertices = new float[vsize * m.verts.length];
-			for (int i = 0; i < m.verts.length; i++) {
-				Vertex v = m.verts[i];
-				int o = vsize * i;
-				mm.vertices[o] = v.position.x;
-				mm.vertices[o + 1] = v.position.y;
-				mm.vertices[o + 2] = v.position.z;
-				mm.vertices[o + 3] = v.normal.x;
-				mm.vertices[o + 4] = v.normal.y;
-				mm.vertices[o + 5] = v.normal.z;
-				if (paintBoneColors) {
-					long key = ByteBuffer.wrap(v.skinningInfo).getLong();
-					Color c = boneColors.get(key);
-					mm.vertices[o + 6] = c.r;
-					mm.vertices[o + 7] = c.g;
-					mm.vertices[o + 8] = c.b;
-					mm.vertices[o + 9] = c.a;
-				} else {
-					mm.vertices[o + 6] = v.texpos.x;
-					mm.vertices[o + 7] = v.texpos.y;
-					if (m.isSkinned()) {
-						for (int b = 0; b < m.maxBindingsPerVertex; b++) {
-							int bid = b < v.bones.length ? v.bones[b] : 0;
-							float bw = b < v.boneWeight.length ? v.boneWeight[b] : 0;
-							mm.vertices[o + 8 + b * 2] = bid;
-							mm.vertices[o + 9 + b * 2] = bw;
-							if (!Float.isFinite(bw) || bw < 0 || bw > 1)
-								System.err.println("Invalid bone alpha");
-							if (bid < 0 || bid >= m.meshParents.length)
-								System.err.println("Invalid bone ID");
-						}
+					part.meshPartId = "mp_" + piece.hashCode();
+					part.materialId = mesh.material_name;
+					part.bones = new ArrayMap<>();
+					for (int i = 0; i < piece.meshParentsRef.length; i++) {
+						TMD_Node node = piece.meshParentsRef[i];
+						part.bones.put(node.node_name, new Matrix4(node.worldPosition));
 					}
 				}
 			}
-			mm.parts = new ModelMeshPart[1];
-			mm.parts[0] = new ModelMeshPart();
-			mm.parts[0].id = m.hashCode() + "_main";
-			mm.parts[0].primitiveType = GL30.GL_TRIANGLE_STRIP;
-			mm.parts[0].indices = Arrays.copyOf(m.tri_strip, m.tri_strip.length);
-			model.meshes.add(mm);
 		}
 
-		for (
-
-		String mat : mats) {
+		for (String mat : mats) {
 			ModelMaterial def = new ModelMaterial();
 			def.id = mat;
 			ModelTexture tex = new ModelTexture();
@@ -252,7 +153,7 @@ public class ModelBuilder {
 			model.animations.add(anim);
 		}
 
-		File out = new File(Base.BASE_OUT, "Data/Models/" + file.category.toLowerCase() + "/" + id + ".g3dj");
+		File out = new File(Base.BASE_OUT, "Data/Models/" + id + ".g3dj");
 		out.getParentFile().mkdirs();
 		JSONObject ff = new JSONObject();
 		G3DModelWriter w = new G3DModelWriter(ff);
@@ -263,5 +164,55 @@ public class ModelBuilder {
 		ww.close();
 		G3dModelLoader loader = new G3dModelLoader(new JsonReader());
 		ModelData output = loader.loadModelData(new FileHandle(out));
+	}
+
+	public static ModelMesh makeMesh(TMD_Mesh m) {
+		m.loadVtxAndTri();
+		ModelMesh mm = new ModelMesh();
+		mm.id = "m_" + m.hashCode();
+		int vsize;
+		if (m.isSkinned()) {
+			mm.attributes = new VertexAttribute[3 + m.maxBindingsPerVertex];
+			mm.attributes[0] = VertexAttribute.Position();
+			mm.attributes[1] = VertexAttribute.Normal();
+			mm.attributes[2] = VertexAttribute.TexCoords(0);
+			for (int i = 0; i < m.maxBindingsPerVertex; i++)
+				mm.attributes[3 + i] = VertexAttribute.BoneWeight(i);
+			vsize = 3 + 3 + 2 + 2 * m.maxBindingsPerVertex;
+		} else {
+			mm.attributes = new VertexAttribute[] { VertexAttribute.Position(), VertexAttribute.Normal(),
+					VertexAttribute.TexCoords(0) };
+			vsize = 3 + 3 + 2;
+		}
+		mm.vertices = new float[vsize * m.verts.length];
+		for (int i = 0; i < m.verts.length; i++) {
+			TMD_Vertex v = m.verts[i];
+			int o = vsize * i;
+			mm.vertices[o] = v.position.x;
+			mm.vertices[o + 1] = v.position.y;
+			mm.vertices[o + 2] = v.position.z;
+			mm.vertices[o + 3] = v.normal.x;
+			mm.vertices[o + 4] = v.normal.y;
+			mm.vertices[o + 5] = v.normal.z;
+			mm.vertices[o + 6] = v.texpos.x;
+			mm.vertices[o + 7] = v.texpos.y;
+			if (m.isSkinned()) {
+				for (int b = 0; b < m.maxBindingsPerVertex; b++) {
+					int bid = b < v.bones.length ? v.bones[b] % v.user.meshParentsRef.length : 0;
+					float bw = b < v.boneWeight.length ? v.boneWeight[b] : 0;
+					mm.vertices[o + 8 + b * 2] = bid;
+					mm.vertices[o + 9 + b * 2] = bw;
+				}
+			}
+		}
+
+		mm.parts = new ModelMeshPart[m.pieces.length];
+		for (int i = 0; i < m.pieces.length; i++) {
+			mm.parts[i] = new ModelMeshPart();
+			mm.parts[i].id = "mp_" + m.pieces[i].hashCode();
+			mm.parts[i].primitiveType = GL30.GL_TRIANGLE_STRIP;
+			mm.parts[i].indices = Arrays.copyOf(m.pieces[i].tri_strip, m.pieces[i].tri_strip.length);
+		}
+		return mm;
 	}
 }

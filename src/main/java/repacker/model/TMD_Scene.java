@@ -8,24 +8,22 @@ import repacker.model.anim.TMD_Animation;
 
 public class TMD_Scene extends TMD_IO {
 	public final byte[] unk2_Zero = new byte[42];
-	public final byte[] unk3 = new byte[4];
-	public final int[] unk4 = new int[9];
-	public final int[] unk5 = new int[4];
-	public final int unk6;
+	public final int unk3;
+	public final int meshCount;
 	public final TMD_Node[] nodes;
 	public final TMD_Animation[] animations;
-	public final short unkS1, unkS3;
+	public final short unkS1, animationMode;
 
 	public TMD_Scene(TMD_File file, ByteBuffer data) throws UnsupportedEncodingException {
 		super(file);
-		data.position(0x40);
-		data.limit(0x40 + data.getInt(0x1C));
+		data.position(TMD_File.SCENE_BLOCK_OFFSET);
+		data.limit(TMD_File.SCENE_BLOCK_OFFSET + file.sceneBlockSize);
 		short numNodes = data.getShort();
 		unkS1 = data.getShort();
 		short numAnimations = data.getShort();
-		unkS3 = data.getShort();
+		animationMode = data.getShort();
 		data.get(unk2_Zero);
-		data.get(unk3);
+		unk3 = data.getInt();
 		nodes = new TMD_Node[numNodes];
 		for (int i = 0; i < numNodes; i++) {
 			data.position(0x7C + i * 0xB0);
@@ -41,7 +39,9 @@ public class TMD_Scene extends TMD_IO {
 			animations[i] = new TMD_Animation(this, data);
 			animations[i].scene_AnimMeta = animationMeta[i];
 		}
-		unk6 = data.getInt();
+		meshCount = data.getInt();
+		if (data.hasRemaining())
+			System.out.println("Didn't consume the entire scene block");
 		data.limit(data.capacity());
 	}
 

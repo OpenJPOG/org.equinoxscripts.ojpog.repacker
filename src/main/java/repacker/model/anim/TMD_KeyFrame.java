@@ -26,7 +26,13 @@ public class TMD_KeyFrame extends TMD_IO {
 
 	@Override
 	public void link() {
-		this.pos.set(file.tklRepo.positions[posKey]);
-		this.rot.set(file.tklRepo.rotations[rotKey]);
+		if (posKey == 0 && file.tklRepo.positions.length == 0)
+			this.pos.set(0, 0, 0);
+		else
+			this.pos.set(file.tklRepo.positions[posKey]);
+		if (rotKey == 0 && file.tklRepo.rotations.length == 0)
+			this.rot.idt();
+		else
+			this.rot.set(file.tklRepo.rotations[rotKey]);
 	}
 }

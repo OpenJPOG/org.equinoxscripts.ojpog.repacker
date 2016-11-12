@@ -6,7 +6,8 @@ import java.util.Arrays;
 
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Quaternion;
-import com.badlogic.gdx.math.Vector3;
+
+import repacker.Utils;
 
 public class TMD_Node extends TMD_IO {
 	private final TMD_Scene scene;
@@ -15,7 +16,7 @@ public class TMD_Node extends TMD_IO {
 		super(scene.file);
 		this.scene = scene;
 		this.id = id;
-		Quaternion rotation = new Quaternion(b.getFloat(), b.getFloat(), b.getFloat(), b.getFloat());
+		Quaternion rotation = Utils.readQ(b);
 		this.worldSkinningMatrix = new Matrix4(floats(b, new float[16]));
 		this.worldSkinningMatrix_Inv = new Matrix4(floats(b, new float[16]));
 
@@ -24,7 +25,7 @@ public class TMD_Node extends TMD_IO {
 		this.parent = b.getShort();
 		this.noMesh = b.getShort();
 		// unkown
-		this.matrix2 = new Matrix4().set(new Vector3(b.getFloat(), b.getFloat(), b.getFloat()), rotation);
+		this.matrix2 = new Matrix4().set(Utils.readV3(b), rotation);
 
 		// if we are skinned...
 		this.worldPosition = worldSkinningMatrix;// : matrix2;

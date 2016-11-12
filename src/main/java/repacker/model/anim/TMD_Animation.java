@@ -10,6 +10,7 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 
+import repacker.Utils;
 import repacker.model.TMD_IO;
 import repacker.model.TMD_Scene;
 
@@ -23,9 +24,12 @@ public class TMD_Animation extends TMD_IO {
 	public final TMD_Channel[] channels;
 	public int scene_AnimMeta;
 
+	public static int maxNameLen = 0;
+
 	public TMD_Animation(TMD_Scene scene, ByteBuffer data) throws UnsupportedEncodingException {
 		super(scene.file);
 		byte namelen = data.get();
+		maxNameLen = Math.max(namelen & 0xFF, maxNameLen);
 		name = read(data, 23).toLowerCase(); // rationalize the animation names
 		unk1 = data.getInt();
 		length = data.getFloat();
@@ -49,41 +53,48 @@ public class TMD_Animation extends TMD_IO {
 
 		// Localize
 		// Make a set of all keyframe times
-		TreeSet<Float> flts = Arrays.stream(channels).filter(a -> a.nodeRef != null)
-				.flatMap(a -> Arrays.stream(a.frames)).map(a -> a.time)
-				.collect(Collectors.toCollection(() -> new TreeSet<Float>()));
-
-		Quaternion tmpQ = new Quaternion();
-		Vector3 tmp3 = new Vector3();
-
-		Matrix4[] pose = new Matrix4[channels.length];
-		for (int i = 0; i < pose.length; i++)
-			pose[i] = new Matrix4();
-
-		int[] frames = new int[channels.length];
-
-		for (float t : flts) {
-			// Build a current pose set.
-			for (int i = 0; i < channels.length; i++) {
-				if (channels[i].nodeRef == null)
-					continue;
-				frames[i] = channels[i].value(t, tmp3, tmpQ, false);
-				pose[i].set(tmp3, tmpQ);// .mulLeft(channels[i].nodeRef.localPosition);
+		// TreeSet<Float> flts = Arrays.stream(channels).filter(a -> a.nodeRef
+		// != null)
+		// .flatMap(a -> Arrays.stream(a.frames)).map(a -> a.time)
+		// .collect(Collectors.toCollection(() -> new TreeSet<Float>()));
+		//
+		// Quaternion tmpQ = new Quaternion();
+		// Vector3 tmp3 = new Vector3();
+		//
+		// Matrix4[] pose = new Matrix4[channels.length];
+		// for (int i = 0; i < pose.length; i++)
+		// pose[i] = new Matrix4();
+		//
+		// int[] frames = new int[channels.length];
+		//
+		// for (float t : flts) {
+		// // Build a current pose set.
+		// for (int i = 0; i < channels.length; i++) {
+		// if (channels[i].nodeRef == null)
+		// continue;
+		// frames[i] = channels[i].value(t, tmp3, tmpQ, false);
+		// pose[i].set(tmp3, tmpQ);//
+		// .mulLeft(channels[i].nodeRef.localPosition);
+		// }
+		// // Find matching frames.
+		// for (int i = 0; i < channels.length; i++) {
+		// if (channels[i].nodeRef == null)
+		// continue;
+		// int frame = frames[i];
+		// TMD_KeyFrame b = channels[i].frames[frame];
+		// if (frame < channels[i].frames.length - 1 && b.time != t)
+		// b = channels[i].frames[frame + 1];
+		// if (b.time == t) {
+		// pose[i].getTranslation(b.localPos);
+		// Utils.unique(pose[i].getRotation(b.localRot));
+		// channels[i].nodeRef.localPosition.getTranslation(b.localPos);
+		// }
+		// }
+		// }
+		for (TMD_Channel c : channels)
+			for (TMD_KeyFrame f : c.frames) {
+				f.localPos.set(f.pos);
+				f.localRot.set(f.rot);
 			}
-			// Find matching frames.
-			for (int i = 0; i < channels.length; i++) {
-				if (channels[i].nodeRef == null)
-					continue;
-				int frame = frames[i];
-				TMD_KeyFrame b = channels[i].frames[frame];
-				if (frame < channels[i].frames.length - 1 && b.time != t)
-					b = channels[i].frames[frame + 1];
-				if (b.time == t) {
-					pose[i].getTranslation(b.localPos);
-					pose[i].getRotation(b.localRot);
-					channels[i].nodeRef.localPosition.getTranslation(b.localPos);
-				}
-			}
-		}
 	}
 }

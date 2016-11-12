@@ -14,6 +14,7 @@ import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 
 import repacker.Base;
+import repacker.Utils;
 import repacker.model.TMD_IO;
 
 /**
@@ -50,9 +51,9 @@ public class TKL_File extends TMD_IO {
 
 		data.get(unk3);
 		for (int i = 0; i < positions.length; i++)
-			positions[i] = new Vector3(data.getFloat(), data.getFloat(), data.getFloat());
+			positions[i] = Utils.readV3(data);
 		for (int i = 0; i < rotations.length; i++)
-			rotations[i] = new Quaternion(data.getFloat(), data.getFloat(), data.getFloat(), data.getFloat());
+			rotations[i] = Utils.readQ(data);
 	}
 
 	private static final Map<String, TKL_File> tkl = new HashMap<>();
@@ -79,6 +80,8 @@ public class TKL_File extends TMD_IO {
 				bos.close();
 				ByteBuffer data = ByteBuffer.wrap(bos.toByteArray()).order(ByteOrder.LITTLE_ENDIAN);
 				TKL_File file = new TKL_File(data);
+//				System.out.println("Loaded TKL file " + name + " (" + file.positions.length + " positions, "
+//						+ file.rotations.length + " rotations)");
 				tkl.put(name, file);
 				return file;
 			} catch (Exception e) {
