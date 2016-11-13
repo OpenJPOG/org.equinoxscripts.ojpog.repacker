@@ -86,7 +86,7 @@ public class ModelExtractor {
 	public static void main(String[] args) throws IOException, InterruptedException {
 		for (File base_input : Base.BASE_IN) {
 			for (File f : new File(base_input, "Data/Models").listFiles()) {
-				String[] find = {};//{"Allo_hi.tmd", "WelcCntr_hi.tmd"};
+				String[] find = {"WelcCntr_hi.tmd"};
 				Stream<String> findS = Arrays.stream(find);
 				if (f.getName().endsWith(".tmd")
 						&& (find.length == 0 || findS.map(s -> f.getName().toLowerCase().contains(s.toLowerCase()))
@@ -97,7 +97,6 @@ public class ModelExtractor {
 						if (FIND_CATS.length > 0 && !Arrays.stream(FIND_CATS)
 								.filter(s -> file.category.equalsIgnoreCase(s)).findAny().isPresent())
 							continue;
-						if (1==1) continue;
 						if (data.hasRemaining())
 							System.out.println("Read: " + f + ", leftover " + data.remaining());
 						// if (data.hasRemaining())

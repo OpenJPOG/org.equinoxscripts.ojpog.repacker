@@ -10,13 +10,21 @@ import repacker.model.TMD_Scene;
 public class TMD_Animation extends TMD_IO {
 	public final String name;
 	public final float length;
-	public final boolean unk1, unk2;
+	
+	// If these are both on prune the animation.
+	public final boolean unk1;
+	public final boolean unk2;
 	/**
 	 * Number of nodes relevant to this animation?
 	 */
 	public final int unk3;
 	public final TMD_Channel[] channels;
+	public final TMD_Channel[] channelNodeMap;
 	public int scene_AnimMeta;
+	
+	public boolean shouldPruneChannels() {
+		return unk1 && unk2;
+	}
 
 	public TMD_Animation(TMD_Scene scene, ByteBuffer data) throws UnsupportedEncodingException {
 		super(scene.file);
@@ -38,9 +46,11 @@ public class TMD_Animation extends TMD_IO {
 		}
 		Arrays.sort(nodeRemap, (a, b) -> Integer.compare(a[0], b[0]));
 		channels = new TMD_Channel[scene.nodes.length];
+		channelNodeMap = new TMD_Channel[scene.nodes.length];
 		for (int c = 0; c < channels.length; c++) {
 			channels[c] = new TMD_Channel(this, data);
 			channels[c].nodeID = nodeRemap[c][1];
+			channelNodeMap[channels[c].nodeID] = channels[c];
 		}
 	}
 
@@ -53,10 +63,15 @@ public class TMD_Animation extends TMD_IO {
 		for (int i = 0; i < channels.length; i++)
 			channels[i].nodeRef = file.scene.nodes[channels[i].nodeID];
 
-		if (name.contains("bld") || name.equals("walk_lp")) {
-			
-		}
-		
+		// if (unk1 != unk2) {
+		// System.out.println(name + " " + unk1 + " " + unk2 + " " + unk3);
+		// for (int i = 0; i < channels.length; i++)
+		// System.out.print(
+		// channels[i].nodeRef + "[l=" + channels[i].frames.length + ", k=" +
+		// channels[i].unk1 + "]");
+		// System.out.println();
+		// }
+
 		// Link channel data
 		for (TMD_Channel c : channels) {
 			if (c.nodeRef != null)

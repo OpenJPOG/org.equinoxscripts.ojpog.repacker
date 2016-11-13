@@ -9,18 +9,29 @@ import repacker.model.TMD_IO;
 import repacker.model.TMD_Node;
 
 public class TMD_Channel extends TMD_IO {
+	public final TMD_Animation animation;
 	public TMD_Node nodeRef;
 
+	// 0,1,2,3
 	public final short unk1;
 	public final TMD_KeyFrame[] frames;
 	public int nodeID;
 
 	public TMD_Channel(TMD_Animation animation, ByteBuffer data) {
 		super(animation.file);
+		this.animation = animation;
 		this.unk1 = data.getShort();
 		this.frames = new TMD_KeyFrame[data.getShort() & 0xFFFF];
 		for (int i = 0; i < this.frames.length; i++)
 			this.frames[i] = new TMD_KeyFrame(this, data);
+	}
+
+	public boolean shouldIgnore() {
+		// unk1==1 recursive include?
+		// unk1==2 singular include?
+		if (!animation.shouldPruneChannels())
+			return false;
+		return unk1 != 0;
 	}
 
 	@Override
