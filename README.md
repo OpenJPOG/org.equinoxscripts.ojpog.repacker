@@ -35,3 +35,9 @@ One note is that the project does require the [LibGDX](https://github.com/libgdx
 [Acrocanthosaurus + Armature: Roar](https://puu.sh/sgiGO/ad0e86551b.gif)
 
 [Dilophosaurus: Idle Sniff](https://puu.sh/sgFSW/b38be61b0e.gif)
+
+## Credits
+All textures and models used come from a combination of the [Forgotten Mod](http://www.moddb.com/mods/jpog-the-forgotten) and the original game.  Initial file format specification written and published by [Andres James](http://tresed.trescom.org/jpog/jpog_formats.html).
+
+## Disclaimer
+The information provided by this tool may not be used to break the law in any way, including but not limited to the use of the converted models in for profit projects.  I also make no assurances to the accuracy of this document; use at your own risk.
