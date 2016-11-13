@@ -86,7 +86,7 @@ public class ModelExtractor {
 	public static void main(String[] args) throws IOException, InterruptedException {
 		for (File base_input : Base.BASE_IN) {
 			for (File f : new File(base_input, "Data/Models").listFiles()) {
-				String[] find = {"WelcCntr_hi.tmd"};
+				String[] find = { "WelcCntr_hi.tmd" };
 				Stream<String> findS = Arrays.stream(find);
 				if (f.getName().endsWith(".tmd")
 						&& (find.length == 0 || findS.map(s -> f.getName().toLowerCase().contains(s.toLowerCase()))
@@ -99,6 +99,7 @@ public class ModelExtractor {
 							continue;
 						if (data.hasRemaining())
 							System.out.println("Read: " + f + ", leftover " + data.remaining());
+						System.out.println(file.scene.sceneGraph(a -> ""));
 						// if (data.hasRemaining())
 						// System.out.println(file.scene.unkS1 + "\t" +
 						// file.meshes.unk1);

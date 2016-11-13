@@ -3,7 +3,6 @@ package repacker.model;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import repacker.Utils;
 import repacker.model.ext.TKL_File;
 
 public class TMD_File extends TMD_IO {
