@@ -27,8 +27,12 @@ public class TMD_Animation extends TMD_IO {
 	public TMD_Animation(TMD_Scene scene, ByteBuffer data) throws UnsupportedEncodingException {
 		super(scene.file);
 		byte namelen = data.get();
-		name = read(data, 15).toLowerCase(); // rationalize the animation names
-		ints(data, unk1);
+//		this is RIGHT, but it broke something
+//		name = read(data, 15).toLowerCase(); // rationalize the animation names
+//		ints(data, unk1);
+		name = read(data, 23).toLowerCase(); // rationalize the animation names
+		unk1[0] = data.getInt();
+
 		length = data.getFloat();
 		int[] nodeMeta = new int[scene.nodes.length];
 		ints(data, nodeMeta);

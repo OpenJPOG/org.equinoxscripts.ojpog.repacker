@@ -87,7 +87,7 @@ public class ModelExtractor {
 		for (File base_input : Base.BASE_IN) {
 			for (File f : new File(base_input, "Data/Models").listFiles()) {
 //				String[] find = {"alberto_hi.tmd", "cory_hi.tmd", "cerato_hi.tmd", "camara_hi.tmd","cow.tmd", "pachy_hi.tmd", "para_hi.tmd", "steg_hi.tmd", "styrac_hi.tmd", "trex_hi.tmd" };
-				String[] find = {};//{"alberto_hi.tmd"};
+				String[] find = {"acro_hi.tmd"};//{"alberto_hi.tmd"};
 				// DINOS;
 				Stream<String> findS = Arrays.stream(find);
 				if (f.getName().endsWith(".tmd")
