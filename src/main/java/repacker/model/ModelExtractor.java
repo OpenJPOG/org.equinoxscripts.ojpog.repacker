@@ -86,9 +86,7 @@ public class ModelExtractor {
 	public static void main(String[] args) throws IOException, InterruptedException {
 		for (File base_input : Base.BASE_IN) {
 			for (File f : new File(base_input, "Data/Models").listFiles()) {
-//				String[] find = {"alberto_hi.tmd", "cory_hi.tmd", "cerato_hi.tmd", "camara_hi.tmd","cow.tmd", "pachy_hi.tmd", "para_hi.tmd", "steg_hi.tmd", "styrac_hi.tmd", "trex_hi.tmd" };
-				String[] find = {"acro_hi.tmd"};//{"alberto_hi.tmd"};
-				// DINOS;
+				String[] find = {};//{"Allo_hi.tmd", "WelcCntr_hi.tmd"};
 				Stream<String> findS = Arrays.stream(find);
 				if (f.getName().endsWith(".tmd")
 						&& (find.length == 0 || findS.map(s -> f.getName().toLowerCase().contains(s.toLowerCase()))
@@ -99,40 +97,12 @@ public class ModelExtractor {
 						if (FIND_CATS.length > 0 && !Arrays.stream(FIND_CATS)
 								.filter(s -> file.category.equalsIgnoreCase(s)).findAny().isPresent())
 							continue;
+						if (1==1) continue;
+						if (data.hasRemaining())
+							System.out.println("Read: " + f + ", leftover " + data.remaining());
 						// if (data.hasRemaining())
 						// System.out.println(file.scene.unkS1 + "\t" +
 						// file.meshes.unk1);
-						System.out.println("Read: " + f + ", leftover " + data.remaining());
-						System.out.println(Arrays.toString(file.scene.animations[0].unk1));
-						for (TMD_Animation a : file.scene.animations) {
-							if (!a.name.equalsIgnoreCase("idle_post_lp"))
-								continue;
-							System.out.println(a.name + "\t" + a.unk1 + "\t" + a.scene_AnimMeta);
-							for (TMD_Channel c : a.channels) {
-								TMD_Node n = c.nodeRef;
-								if (n == null)
-									continue;
-								Vector3 tmp3 = new Vector3();
-								Quaternion tmpQ = new Quaternion();
-								n.localPosition.getRotation(tmpQ);
-								n.localPosition.getTranslation(tmp3);
-								if (n.node_name.startsWith("T_") || n.node_name.startsWith("D_")
-										|| n.node_name.startsWith("L_"))
-									continue;
-								System.out.println(
-										n.node_name + "\t" + c.unk1 + "\t" + Integer.toHexString(c.anim_NodeMeta));
-								System.out.println(c.frames[0].localPos + "\t" + tmp3);
-								System.out.println(c.frames[0].localRot + "\t" + tmpQ);
-								System.out.print(Arrays.stream(c.frames).mapToDouble(ha -> ha.localPos.dst(tmp3)).min()
-										.getAsDouble() + "\t");
-								System.out.println(Arrays.stream(c.frames)
-										.mapToDouble(
-												ha -> new Quaternion(tmpQ).conjugate().mulLeft(ha.localRot).getAngle())
-										.min().getAsDouble() + " deg");
-							}
-							System.out.println();
-						}
-
 						ModelBuilder.write(f.getName().substring(0, f.getName().length() - 4), file);
 					} catch (Exception e) {
 						System.err.println("Err reading " + f);

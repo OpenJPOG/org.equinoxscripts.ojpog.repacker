@@ -24,13 +24,12 @@ public class TMD_Node extends TMD_IO {
 		this.node_name = read(b, 15);
 		this.parent = b.getShort();
 		this.noMesh = b.getShort();
-		// unkown
+		// unknown
 		this.matrix2 = new Matrix4().set(Utils.readV3(b), rotation);
 
 		// if we are skinned...
-		this.worldPosition = worldSkinningMatrix;// : matrix2;
-		this.worldPosition_Inv = worldSkinningMatrix_Inv;// : new
-															// Matrix4(worldPosition).inv();
+		this.worldPosition = worldSkinningMatrix;
+		this.worldPosition_Inv = worldSkinningMatrix_Inv;
 
 		this.localPosition = new Matrix4();
 		this.localPosition_Inv = new Matrix4();

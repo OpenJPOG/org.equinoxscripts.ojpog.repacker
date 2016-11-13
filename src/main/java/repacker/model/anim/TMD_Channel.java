@@ -13,8 +13,7 @@ public class TMD_Channel extends TMD_IO {
 
 	public final short unk1;
 	public final TMD_KeyFrame[] frames;
-
-	public int anim_NodeMeta;
+	public int nodeID;
 
 	public TMD_Channel(TMD_Animation animation, ByteBuffer data) {
 		super(animation.file);

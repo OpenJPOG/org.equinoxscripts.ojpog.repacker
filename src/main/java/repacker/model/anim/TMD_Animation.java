@@ -3,43 +3,44 @@ package repacker.model.anim;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.TreeSet;
-import java.util.stream.Collectors;
 
-import com.badlogic.gdx.math.Matrix4;
-import com.badlogic.gdx.math.Quaternion;
-import com.badlogic.gdx.math.Vector3;
-
-import repacker.Utils;
 import repacker.model.TMD_IO;
 import repacker.model.TMD_Scene;
 
 public class TMD_Animation extends TMD_IO {
 	public final String name;
 	public final float length;
+	public final boolean unk1, unk2;
 	/**
 	 * Number of nodes relevant to this animation?
 	 */
-	public final int[] unk1 = new int[3];
+	public final int unk3;
 	public final TMD_Channel[] channels;
 	public int scene_AnimMeta;
 
 	public TMD_Animation(TMD_Scene scene, ByteBuffer data) throws UnsupportedEncodingException {
 		super(scene.file);
 		byte namelen = data.get();
-//		this is RIGHT, but it broke something
-//		name = read(data, 15).toLowerCase(); // rationalize the animation names
-//		ints(data, unk1);
-		name = read(data, 23).toLowerCase(); // rationalize the animation names
-		unk1[0] = data.getInt();
+		name = read(data, 15).toLowerCase(); // rationalize the animation name
+		unk1 = data.getInt() != 0;
+		unk2 = data.getInt() != 0;
+		unk3 = data.getInt();
 
 		length = data.getFloat();
-		int[] nodeMeta = new int[scene.nodes.length];
-		ints(data, nodeMeta);
+
+		// A table that maps channel data offsets to node IDs.
+		// nodeRemap[i][0] + C == dataStart[channel with that node]
+		// C is constant for each animation.
+		int[][] nodeRemap = new int[scene.nodes.length][2];
+		for (int i = 0; i < nodeRemap.length; i++) {
+			nodeRemap[i][0] = data.getInt();
+			nodeRemap[i][1] = i;
+		}
+		Arrays.sort(nodeRemap, (a, b) -> Integer.compare(a[0], b[0]));
 		channels = new TMD_Channel[scene.nodes.length];
 		for (int c = 0; c < channels.length; c++) {
 			channels[c] = new TMD_Channel(this, data);
-			channels[c].anim_NodeMeta = nodeMeta[c];
+			channels[c].nodeID = nodeRemap[c][1];
 		}
 	}
 
@@ -49,53 +50,23 @@ public class TMD_Animation extends TMD_IO {
 			c.link();
 
 		// Link nodeRef:
-		for (int i = 1; i < channels.length; i++)
-			channels[i].nodeRef = file.scene.nodes[i - 1];
+		for (int i = 0; i < channels.length; i++)
+			channels[i].nodeRef = file.scene.nodes[channels[i].nodeID];
 
-		// Localize
-		// Make a set of all keyframe times
-		// TreeSet<Float> flts = Arrays.stream(channels).filter(a -> a.nodeRef
-		// != null)
-		// .flatMap(a -> Arrays.stream(a.frames)).map(a -> a.time)
-		// .collect(Collectors.toCollection(() -> new TreeSet<Float>()));
-		//
-		// Quaternion tmpQ = new Quaternion();
-		// Vector3 tmp3 = new Vector3();
-		//
-		// Matrix4[] pose = new Matrix4[channels.length];
-		// for (int i = 0; i < pose.length; i++)
-		// pose[i] = new Matrix4();
-		//
-		// int[] frames = new int[channels.length];
-		//
-		// for (float t : flts) {
-		// // Build a current pose set.
-		// for (int i = 0; i < channels.length; i++) {
-		// if (channels[i].nodeRef == null)
-		// continue;
-		// frames[i] = channels[i].value(t, tmp3, tmpQ, false);
-		// pose[i].set(tmp3, tmpQ);//
-		// .mulLeft(channels[i].nodeRef.localPosition);
-		// }
-		// // Find matching frames.
-		// for (int i = 0; i < channels.length; i++) {
-		// if (channels[i].nodeRef == null)
-		// continue;
-		// int frame = frames[i];
-		// TMD_KeyFrame b = channels[i].frames[frame];
-		// if (frame < channels[i].frames.length - 1 && b.time != t)
-		// b = channels[i].frames[frame + 1];
-		// if (b.time == t) {
-		// pose[i].getTranslation(b.localPos);
-		// Utils.unique(pose[i].getRotation(b.localRot));
-		// channels[i].nodeRef.localPosition.getTranslation(b.localPos);
-		// }
-		// }
-		// }
-		for (TMD_Channel c : channels)
-			for (TMD_KeyFrame f : c.frames) {
-				f.localPos.set(f.pos);
-				f.localRot.set(f.rot);
-			}
+		if (name.contains("bld") || name.equals("walk_lp")) {
+			
+		}
+		
+		// Link channel data
+		for (TMD_Channel c : channels) {
+			if (c.nodeRef != null)
+				for (TMD_KeyFrame f : c.frames) {
+					f.localPos.set(f.pos);
+					f.localRot.set(f.rot);
+					// Supplied position keys seem wrong, revert to local
+					// position data. TODO
+					c.nodeRef.localPosition.getTranslation(f.localPos);
+				}
+		}
 	}
 }
