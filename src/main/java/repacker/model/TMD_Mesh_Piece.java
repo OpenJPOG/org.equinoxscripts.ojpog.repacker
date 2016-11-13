@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.collision.BoundingBox;
 
 import repacker.Utils;
 
@@ -21,13 +22,13 @@ public class TMD_Mesh_Piece extends TMD_IO {
 	public final TMD_Mesh root;
 
 	public final int vertsRequired;
-	
+
 	public final int dataOffset, dataSize;
 
 	public TMD_Mesh_Piece(TMD_Mesh root, ByteBuffer b) {
 		super(root.file);
 		this.dataOffset = b.position();
-		
+
 		int tris = b.getInt();
 		int verts = b.getInt();
 		int num_nodes = b.getInt();
@@ -36,6 +37,8 @@ public class TMD_Mesh_Piece extends TMD_IO {
 		boundingCenter = Utils.readV3(b);
 		boundingExtents = Utils.readV3(b);
 
+		if (num_nodes > 10e6 || tris > 10e6 || verts > 10e6)
+			throw new RuntimeException("Bad mesh size");
 		meshParents = new int[num_nodes];
 		meshParentsRef = new TMD_Node[num_nodes];
 		for (int j = 0; j < meshParents.length; j++)
@@ -59,8 +62,9 @@ public class TMD_Mesh_Piece extends TMD_IO {
 		this.index = b.slice();
 		this.index.order(b.order());
 		b.position(indexEnd);
+
 		b.limit(origLim);
-		
+
 		dataSize = b.position() - dataOffset;
 	}
 
@@ -119,5 +123,19 @@ public class TMD_Mesh_Piece extends TMD_IO {
 				maxBindingsPerVertex = Math.max(maxBindingsPerVertex, v.bones.length);
 			}
 		}
+	}
+
+	public void checkBoundingBox() {
+		BoundingBox box = new BoundingBox().inf();
+		for (TMD_Vertex v : verts)
+			box.ext(v.position);
+		Vector3 dims = box.getDimensions(new Vector3()).scl(0.5f);
+		if (verts.length == 0)
+			dims.set(Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY);
+		Vector3 center = box.getCenter(new Vector3());
+		if (!center.epsilonEquals(boundingCenter, 1e-4f))
+			System.err.println("Piece bounding centers inequal: " + center + " vs " + boundingCenter);
+		if (!dims.epsilonEquals(boundingExtents, 1e-4f))
+			System.err.println("Piece bounding extents inequal: " + dims + " vs " + boundingExtents);
 	}
 }

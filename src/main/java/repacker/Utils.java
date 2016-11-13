@@ -33,12 +33,19 @@ public class Utils {
 		}
 	}
 
+	public static boolean isPermitted(String s) {
+		for (int i = 0; i < s.length(); i++)
+			if (!Character.isJavaIdentifierPart(s.charAt(i)))
+				return false;
+		return true;
+	}
+
 	public static String toHexString(Object... f) {
 		if (f.length == 1)
 			return toHexStringA(f[0]);
 		return toHexStringA(f);
 	}
-	
+
 	public static String toHexStringA(Object f) {
 		StringBuilder s = new StringBuilder("[");
 		for (int i = 0; i < Array.getLength(f); i++) {

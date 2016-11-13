@@ -18,6 +18,7 @@ public class TMD_Scene extends TMD_IO {
 		super(file);
 		data.position(TMD_File.SCENE_BLOCK_OFFSET);
 		data.limit(TMD_File.SCENE_BLOCK_OFFSET + file.sceneBlockSize);
+		
 		short numNodes = data.getShort();
 		unkS1 = data.getShort();
 		short numAnimations = data.getShort();

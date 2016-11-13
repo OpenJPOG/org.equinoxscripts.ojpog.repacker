@@ -20,18 +20,15 @@ public class TMD_Animation extends TMD_IO {
 	/**
 	 * Number of nodes relevant to this animation?
 	 */
-	public final int unk1;
+	public final int[] unk1 = new int[3];
 	public final TMD_Channel[] channels;
 	public int scene_AnimMeta;
-
-	public static int maxNameLen = 0;
 
 	public TMD_Animation(TMD_Scene scene, ByteBuffer data) throws UnsupportedEncodingException {
 		super(scene.file);
 		byte namelen = data.get();
-		maxNameLen = Math.max(namelen & 0xFF, maxNameLen);
-		name = read(data, 23).toLowerCase(); // rationalize the animation names
-		unk1 = data.getInt();
+		name = read(data, 15).toLowerCase(); // rationalize the animation names
+		ints(data, unk1);
 		length = data.getFloat();
 		int[] nodeMeta = new int[scene.nodes.length];
 		ints(data, nodeMeta);

@@ -40,6 +40,8 @@ import repacker.model.anim.TMD_Channel;
 import repacker.model.anim.TMD_KeyFrame;
 
 public class ModelBuilder {
+	public static final boolean enableSkinning = true;
+
 	public static void write(String id, TMD_File file) throws IOException {
 		ModelData model = new ModelData();
 		model.id = id;
@@ -77,7 +79,11 @@ public class ModelBuilder {
 		{
 			ModelNode root = model.nodes.get(0);
 			int aliasOffset = root.children.length;
-			root.children = Arrays.copyOf(root.children, root.children.length + file.meshes.meshes.length);
+			int meshCount = 0;
+			for (TMD_Mesh_Group g : file.meshes.meshes)
+				meshCount += g.members.length;
+
+			root.children = Arrays.copyOf(root.children, root.children.length + meshCount);
 			Vector3 aliasTranslation;
 			Quaternion aliasRotation;
 			{
@@ -86,31 +92,35 @@ public class ModelBuilder {
 				inv.getRotation(aliasRotation = new Quaternion());
 			}
 
-			for (int meshID = 0; meshID < file.meshes.meshes.length; meshID++) {
-				TMD_Mesh mesh = file.meshes.meshes[meshID];
-				mats.add(mesh.material_name);
-				model.meshes.add(makeMesh(mesh));
+			int meshID = 0;
+			for (TMD_Mesh_Group g : file.meshes.meshes)
+				for (TMD_Mesh mesh : g.members) {
+					mats.add(mesh.material_name);
+					model.meshes.add(makeMesh(mesh));
 
-				ModelNode alias = root.children[aliasOffset + meshID] = new ModelNode();
-				alias.id = "mesh_alias_" + mesh.hashCode();
-				alias.translation = new Vector3(aliasTranslation);
-				alias.rotation = new Quaternion(aliasRotation);
-				alias.meshId = "m_" + mesh.hashCode();
+					ModelNode alias = root.children[aliasOffset + meshID] = new ModelNode();
+					alias.id = "mesh_alias_" + mesh.hashCode();
+					alias.translation = new Vector3(aliasTranslation);
+					alias.rotation = new Quaternion(aliasRotation);
+					alias.meshId = "m_" + mesh.hashCode();
 
-				root.parts = new ModelNodePart[mesh.pieces.length];
-				for (int pieceID = 0; pieceID < mesh.pieces.length; pieceID++) {
-					TMD_Mesh_Piece piece = mesh.pieces[pieceID];
-					ModelNodePart part = root.parts[pieceID] = new ModelNodePart();
+					alias.parts = new ModelNodePart[mesh.pieces.length];
+					for (int pieceID = 0; pieceID < mesh.pieces.length; pieceID++) {
+						TMD_Mesh_Piece piece = mesh.pieces[pieceID];
+						ModelNodePart part = alias.parts[pieceID] = new ModelNodePart();
 
-					part.meshPartId = "mp_" + piece.hashCode();
-					part.materialId = mesh.material_name;
-					part.bones = new ArrayMap<>();
-					for (int i = 0; i < piece.meshParentsRef.length; i++) {
-						TMD_Node node = piece.meshParentsRef[i];
-						part.bones.put(node.node_name, new Matrix4(node.worldPosition));
+						part.meshPartId = "mp_" + piece.hashCode();
+						part.materialId = mesh.material_name;
+						if (enableSkinning) {
+							part.bones = new ArrayMap<>();
+							for (int i = 0; i < piece.meshParentsRef.length; i++) {
+								TMD_Node node = piece.meshParentsRef[i];
+								part.bones.put(node.node_name, new Matrix4(node.worldPosition));
+							}
+						}
 					}
+					meshID++;
 				}
-			}
 		}
 
 		for (String mat : mats) {
@@ -171,7 +181,7 @@ public class ModelBuilder {
 		ModelMesh mm = new ModelMesh();
 		mm.id = "m_" + m.hashCode();
 		int vsize;
-		if (m.isSkinned()) {
+		if (m.isSkinned() && enableSkinning) {
 			mm.attributes = new VertexAttribute[3 + m.maxBindingsPerVertex];
 			mm.attributes[0] = VertexAttribute.Position();
 			mm.attributes[1] = VertexAttribute.Normal();
@@ -196,7 +206,7 @@ public class ModelBuilder {
 			mm.vertices[o + 5] = v.normal.z;
 			mm.vertices[o + 6] = v.texpos.x;
 			mm.vertices[o + 7] = v.texpos.y;
-			if (m.isSkinned()) {
+			if (m.isSkinned() && enableSkinning) {
 				for (int b = 0; b < m.maxBindingsPerVertex; b++) {
 					int bid = b < v.bones.length ? v.bones[b] % v.user.meshParentsRef.length : 0;
 					float bw = b < v.boneWeight.length ? v.boneWeight[b] : 0;

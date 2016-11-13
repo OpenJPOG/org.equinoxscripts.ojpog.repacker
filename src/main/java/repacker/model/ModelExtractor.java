@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.badlogic.gdx.math.Quaternion;
@@ -87,31 +86,26 @@ public class ModelExtractor {
 	public static void main(String[] args) throws IOException, InterruptedException {
 		for (File base_input : Base.BASE_IN) {
 			for (File f : new File(base_input, "Data/Models").listFiles()) {
-				String[] find = {};// { "Alberto_hi.tmd" };// , "Cory_hi.tmd",
-									// "Allo_hi.tmd" };//
-									// DINOS;
+//				String[] find = {"alberto_hi.tmd", "cory_hi.tmd", "cerato_hi.tmd", "camara_hi.tmd","cow.tmd", "pachy_hi.tmd", "para_hi.tmd", "steg_hi.tmd", "styrac_hi.tmd", "trex_hi.tmd" };
+				String[] find = {};//{"alberto_hi.tmd"};
+				// DINOS;
 				Stream<String> findS = Arrays.stream(find);
-				if (f.getName().endsWith(".tmd") && (find.length == 0
-						|| findS.map(s -> f.getName().contains(s)).filter(s -> s).findAny().isPresent())) {
+				if (f.getName().endsWith(".tmd")
+						&& (find.length == 0 || findS.map(s -> f.getName().toLowerCase().contains(s.toLowerCase()))
+								.filter(s -> s).findAny().isPresent())) {
 					try {
 						ByteBuffer data = Utils.read(f);
-						TMD_File file = new TMD_File(f.getName().substring(0,f.getName().length()-4), data);
+						TMD_File file = new TMD_File(f.getName().substring(0, f.getName().length() - 4), data);
 						if (FIND_CATS.length > 0 && !Arrays.stream(FIND_CATS)
 								.filter(s -> file.category.equalsIgnoreCase(s)).findAny().isPresent())
 							continue;
-//						if (data.hasRemaining())
-//							System.out.println(file.scene.unkS1 + "\t" + file.meshes.unk1);
-//						System.out.println("Read: " + f + ", leftover " + data.remaining());
-//						System.out.println(file.scene.unkS1 + "\t" + ModelExtractor.hex(file.scene.unk2_Zero) + ", "
-//								+ ModelExtractor.hex(file.scene.unk3) + ", " + Arrays.toString(file.scene.unk4) + ", "
-//								+ Arrays.toString(file.scene.unk5));
-						// System.out.println("Max length " +
-						// TMD_Animation.maxNameLen);
-						if (1 == 1)
-							continue;
-
+						// if (data.hasRemaining())
+						// System.out.println(file.scene.unkS1 + "\t" +
+						// file.meshes.unk1);
+						System.out.println("Read: " + f + ", leftover " + data.remaining());
+						System.out.println(Arrays.toString(file.scene.animations[0].unk1));
 						for (TMD_Animation a : file.scene.animations) {
-							if (!f.getName().equals("WelcCntr_hi.tmd") && !a.name.equalsIgnoreCase("idle_post_lp"))
+							if (!a.name.equalsIgnoreCase("idle_post_lp"))
 								continue;
 							System.out.println(a.name + "\t" + a.unk1 + "\t" + a.scene_AnimMeta);
 							for (TMD_Channel c : a.channels) {
@@ -127,6 +121,8 @@ public class ModelExtractor {
 									continue;
 								System.out.println(
 										n.node_name + "\t" + c.unk1 + "\t" + Integer.toHexString(c.anim_NodeMeta));
+								System.out.println(c.frames[0].localPos + "\t" + tmp3);
+								System.out.println(c.frames[0].localRot + "\t" + tmpQ);
 								System.out.print(Arrays.stream(c.frames).mapToDouble(ha -> ha.localPos.dst(tmp3)).min()
 										.getAsDouble() + "\t");
 								System.out.println(Arrays.stream(c.frames)

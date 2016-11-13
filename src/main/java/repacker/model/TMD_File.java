@@ -47,20 +47,17 @@ public class TMD_File extends TMD_IO {
 		ints(data, zer2);
 
 		this.scene = new TMD_Scene(this, data);
-		System.err.println(ModelExtractor.rpad(k, 16) +"\t" + ModelExtractor.rpad(Utils.toHexString(unk2), 32) + "\t"
-				+ scene.unkS1 + "\t" + Integer.toHexString(scene.unk3) + "\t" + scene.meshCount + "\t" + scene.animationMode);
 		try {
 			this.meshes = new TMD_MeshBlock(this, data);
-			// if (data.hasRemaining())
-			// System.err.println("\t\tRemains: " + data.remaining());
 		} catch (Exception e) {
 			if (e instanceof RuntimeException)
 				throw (RuntimeException) e;
 			throw new RuntimeException(e);
 		}
 
-		// System.out.println("File ends at " + data.capacity() + ", read ends
-		// at " + data.position() + ", remaining=" + data.remaining());
+		if (data.hasRemaining())
+			System.out.println("File ends at " + data.capacity() + ", read ends at " + data.position() + ", remaining="
+					+ data.remaining());
 		this.link();
 	}
 

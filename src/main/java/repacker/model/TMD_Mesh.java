@@ -5,8 +5,6 @@ import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.badlogic.gdx.math.Vector3;
-
 import repacker.Utils;
 
 public class TMD_Mesh extends TMD_IO {
@@ -16,36 +14,31 @@ public class TMD_Mesh extends TMD_IO {
 
 	public final TMD_Mesh_Piece[] pieces;
 
-	public final Vector3 boundingCenter, boundingExtents;
-
 	public final int totalTris;
 
 	public final TMD_Vertex[] verts;
 
 	public final int dataOffset, dataSize;
-	
-	public TMD_Mesh(TMD_File file, ByteBuffer b) throws UnsupportedEncodingException {
-		super(file);
+
+	public TMD_Mesh(TMD_Mesh_Group file, ByteBuffer b) throws UnsupportedEncodingException {
+		super(file.file);
 		this.dataOffset = b.position();
-		// This seems unreliable, and not always present.
-		boundingCenter = Utils.readV3(b);
-		boundingExtents = Utils.readV3(b);
 
 		pieceCount = b.getInt();
 		totalTris = b.getInt();
 		int totalVerts = b.getInt();
+
 		material_name = read(b, 32);
 		// check material name (debugging)
-		for (int i = 0; i<material_name.length(); i++)
-			if (!Character.isJavaIdentifierPart(material_name.charAt(i)))
-				throw new RuntimeException("Not permissible: \"" + material_name + "\"");
+		if (!Utils.isPermitted(material_name))
+			throw new RuntimeException("Not permissible: \"" + material_name + "\"");
 
 		this.verts = new TMD_Vertex[totalVerts];
 
 		pieces = new TMD_Mesh_Piece[pieceCount];
 		for (int i = 0; i < pieces.length; i++)
 			pieces[i] = new TMD_Mesh_Piece(this, b);
-		
+
 		dataSize = b.position() - dataOffset;
 	}
 
@@ -102,5 +95,7 @@ public class TMD_Mesh extends TMD_IO {
 			}
 			check.addAll(similar);
 		}
+		for (TMD_Mesh_Piece p : pieces)
+			p.checkBoundingBox();
 	}
 }
