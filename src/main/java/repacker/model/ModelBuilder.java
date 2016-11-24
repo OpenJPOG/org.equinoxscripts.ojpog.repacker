@@ -48,24 +48,24 @@ public class ModelBuilder {
 		model.id = id;
 		model.version[0] = 0;
 		model.version[1] = 1;
-		ModelNode[] mns = new ModelNode[file.scene.nodes.length];
+		ModelNode[] mns = new ModelNode[file.nodes.nodes.length];
 		Map<TMD_Node, ModelNode> modelNodes = new HashMap<>();
-		for (int i = 0; i < file.scene.nodes.length; i++) {
-			TMD_Node n = file.scene.nodes[i];
+		for (int i = 0; i < file.nodes.nodes.length; i++) {
+			TMD_Node n = file.nodes.nodes[i];
 			ModelNode mn = mns[i] = new ModelNode();
 			modelNodes.put(n, mn);
 			mn.id = n.node_name;
 
-			if (n.parent < 0 || n.parent >= file.scene.nodes.length) {
+			if (n.parent < 0 || n.parent >= file.nodes.nodes.length) {
 				model.nodes.add(mn);
 			}
 			n.localPosition.getTranslation(mn.translation = new Vector3());
 			n.localPosition.getRotation(mn.rotation = new Quaternion());
 		}
 
-		for (int i = 0; i < file.scene.nodes.length; i++) {
-			TMD_Node n = file.scene.nodes[i];
-			if (n.parent >= 0 && n.parent < file.scene.nodes.length) {
+		for (int i = 0; i < file.nodes.nodes.length; i++) {
+			TMD_Node n = file.nodes.nodes[i];
+			if (n.parent >= 0 && n.parent < file.nodes.nodes.length) {
 				ModelNode[] ch = mns[n.parent].children;
 				if (ch == null)
 					mns[n.parent].children = new ModelNode[] { mns[i] };
@@ -136,7 +136,7 @@ public class ModelBuilder {
 			model.materials.add(def);
 		}
 
-		for (TMD_Animation a : file.scene.animations) {
+		for (TMD_Animation a : file.animations.animations) {
 			ModelAnimation anim = new ModelAnimation();
 			anim.id = a.name;
 			anim.nodeAnimations = new Array<>();

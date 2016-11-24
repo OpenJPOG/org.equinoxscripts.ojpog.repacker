@@ -3,8 +3,8 @@ package repacker.model.anim;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
+import repacker.model.TMD_Animation_Block;
 import repacker.model.TMD_IO;
-import repacker.model.TMD_Scene;
 
 public class TMD_Animation extends TMD_IO {
 	public final String name;
@@ -27,7 +27,7 @@ public class TMD_Animation extends TMD_IO {
 		return different && unk2;
 	}
 
-	public TMD_Animation(TMD_Scene scene, ByteBuffer data) throws UnsupportedEncodingException {
+	public TMD_Animation(TMD_Animation_Block scene, ByteBuffer data) throws UnsupportedEncodingException {
 		super(scene.file);
 		@SuppressWarnings("unused")
 		byte namelen = data.get();
@@ -40,10 +40,10 @@ public class TMD_Animation extends TMD_IO {
 
 		int eoa = 0;
 		int offset = data.position();
-		this.channelNodeMap = new TMD_Channel[scene.nodes.length];
-		for (int i = 0; i < scene.nodes.length; i++) {
+		this.channelNodeMap = new TMD_Channel[file.header.numNodes];
+		for (int i = 0; i < file.header.numNodes; i++) {
 			int position = data.getInt(offset + 4 * i);
-			data.position(file.rawOffsetToFile(position));
+			data.position(file.header.rawOffsetToFile(position));
 			channelNodeMap[i] = new TMD_Channel(this, data);
 			channelNodeMap[i].nodeID = i;
 			eoa = Math.max(eoa, data.position());
@@ -74,7 +74,7 @@ public class TMD_Animation extends TMD_IO {
 
 		// Link nodeRef:
 		for (int i = 0; i < channelNodeMap.length; i++)
-			channelNodeMap[i].nodeRef = file.scene.nodes[channelNodeMap[i].nodeID];
+			channelNodeMap[i].nodeRef = file.nodes.nodes[channelNodeMap[i].nodeID];
 
 		// Link channel data
 		for (TMD_Channel c : channelNodeMap) {

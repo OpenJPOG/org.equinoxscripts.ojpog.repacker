@@ -10,20 +10,15 @@ public class TMD_MeshBlock extends TMD_IO {
 
 	public TMD_MeshBlock(TMD_File file, ByteBuffer data) throws UnsupportedEncodingException {
 		super(file);
-		data.position(file.endOfScene());
+		data.position(0x40 + file.header.sceneBlockSize - 4);
+		int numMeshes = data.getInt();
+
 		System.out.println(file.source + " mesh begins at: " + data.position());
 		ints(data, variableHeader = new int[1]);
 
-		meshes = new TMD_Mesh_Group[file.scene.meshCount];
-		for (int i = 0; i < meshes.length; i++) {
-			try {
-				meshes[i] = new TMD_Mesh_Group(file, data);
-			} catch (Exception e) {
-				if (e instanceof RuntimeException)
-					throw (RuntimeException) e;
-				throw new RuntimeException(e);
-			}
-		}
+		meshes = new TMD_Mesh_Group[numMeshes];
+		for (int i = 0; i < meshes.length; i++)
+			meshes[i] = new TMD_Mesh_Group(file, data);
 	}
 
 	@Override

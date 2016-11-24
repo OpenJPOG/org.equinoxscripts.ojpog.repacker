@@ -10,11 +10,11 @@ import com.badlogic.gdx.math.Quaternion;
 import repacker.Utils;
 
 public class TMD_Node extends TMD_IO {
-	private final TMD_Scene scene;
+	private final TMD_Node_Block scene;
 
-	public TMD_Node(TMD_Scene scene, ByteBuffer b, int id) throws UnsupportedEncodingException {
-		super(scene.file);
-		this.scene = scene;
+	public TMD_Node(TMD_Node_Block block, ByteBuffer b, int id) throws UnsupportedEncodingException {
+		super(block.file);
+		this.scene = block;
 		this.id = id;
 		Quaternion rotation = Utils.readQ(b);
 		this.worldSkinningMatrix = new Matrix4(floats(b, new float[16]));

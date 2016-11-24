@@ -43,9 +43,6 @@ public class TMD_Header_Block extends TMD_IO {
 		data.get(unk2);
 		zero(data, 16);
 		data.get(unk3);
-
-		data.position(TMD_File.SCENE_BLOCK_OFFSET);
-
 		numNodes = data.getShort() & 0xFFFF;
 		numS1 = data.getShort() & 0xFFFF;
 		numAnimations = data.getShort() & 0xFFFF;

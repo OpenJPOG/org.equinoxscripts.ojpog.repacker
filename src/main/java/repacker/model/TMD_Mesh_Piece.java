@@ -87,13 +87,13 @@ public class TMD_Mesh_Piece extends TMD_IO {
 
 	@Override
 	public void link() {
-		meshParentInverse = new int[file.scene.nodes.length];
+		meshParentInverse = new int[file.nodes.nodes.length];
 		Arrays.fill(meshParentInverse, -1);
 		for (int i = 0; i < meshParents.length; i++)
 			meshParentInverse[meshParents[i]] = i;
 
 		for (int i = 0; i < meshParents.length; i++)
-			meshParentsRef[i] = file.scene.nodes[meshParents[i]];
+			meshParentsRef[i] = file.nodes.nodes[meshParents[i]];
 
 		loadVtxAndTri();
 

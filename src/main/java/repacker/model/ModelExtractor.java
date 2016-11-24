@@ -96,7 +96,7 @@ public class ModelExtractor {
 						ByteBuffer data = Utils.read(f);
 						TMD_File file = new TMD_File(f.getName().substring(0, f.getName().length() - 4), data);
 						if (FIND_CATS.length > 0 && !Arrays.stream(FIND_CATS)
-								.filter(s -> file.category.equalsIgnoreCase(s)).findAny().isPresent())
+								.filter(s -> file.header.category.equalsIgnoreCase(s)).findAny().isPresent())
 							continue;
 						if (data.hasRemaining())
 							System.out.println("Read: " + f + ", leftover " + data.remaining());
@@ -104,7 +104,7 @@ public class ModelExtractor {
 						// System.out.println(file.scene.unkS1 + "\t" +
 						// file.meshes.unk1);
 //						System.out.println("Write " + file.source);
-//						ModelBuilder.write(f.getName().substring(0, f.getName().length() - 4), file);
+						ModelBuilder.write(f.getName().substring(0, f.getName().length() - 4), file);
 					} catch (Exception e) {
 						System.err.println("Err reading " + f);
 						e.printStackTrace();
