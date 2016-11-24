@@ -86,11 +86,12 @@ public class ModelExtractor {
 	public static void main(String[] args) throws IOException, InterruptedException {
 		for (File base_input : Base.BASE_IN) {
 			for (File f : new File(base_input, "Data/Models").listFiles()) {
-				String[] find = { "WelcCntr_hi.tmd" };
+				String[] find = { "ABeacon_hi.tmd", "WelcCntr_hi.tmd", "HuntPlat.tmd", "STurret.tmd", "Acro_hi.tmd" };
 				Stream<String> findS = Arrays.stream(find);
 				if (f.getName().endsWith(".tmd")
 						&& (find.length == 0 || findS.map(s -> f.getName().toLowerCase().contains(s.toLowerCase()))
 								.filter(s -> s).findAny().isPresent())) {
+					System.out.println("");
 					try {
 						ByteBuffer data = Utils.read(f);
 						TMD_File file = new TMD_File(f.getName().substring(0, f.getName().length() - 4), data);
@@ -99,11 +100,11 @@ public class ModelExtractor {
 							continue;
 						if (data.hasRemaining())
 							System.out.println("Read: " + f + ", leftover " + data.remaining());
-						System.out.println(file.scene.sceneGraph(a -> ""));
 						// if (data.hasRemaining())
 						// System.out.println(file.scene.unkS1 + "\t" +
 						// file.meshes.unk1);
-						ModelBuilder.write(f.getName().substring(0, f.getName().length() - 4), file);
+//						System.out.println("Write " + file.source);
+//						ModelBuilder.write(f.getName().substring(0, f.getName().length() - 4), file);
 					} catch (Exception e) {
 						System.err.println("Err reading " + f);
 						e.printStackTrace();

@@ -12,26 +12,38 @@ public class TMD_Channel extends TMD_IO {
 	public final TMD_Animation animation;
 	public TMD_Node nodeRef;
 
-	// 0,1,2,3
-	public final short unk1;
+	public final boolean usePositionKeys;
+	public final boolean ignoreThisChannel;
 	public final TMD_KeyFrame[] frames;
 	public int nodeID;
+	public int nodeRemap;
+	public final int offset;
 
 	public TMD_Channel(TMD_Animation animation, ByteBuffer data) {
 		super(animation.file);
+		this.offset = data.position();
 		this.animation = animation;
-		this.unk1 = data.getShort();
+		short tmp = data.getShort();
+		this.usePositionKeys = bool(tmp & 1);
+		this.ignoreThisChannel = bool((tmp >> 1) & 1);
+		if ((tmp & ~3) != 0)
+			System.err.println("Channel has bad bitfield");
 		this.frames = new TMD_KeyFrame[data.getShort() & 0xFFFF];
 		for (int i = 0; i < this.frames.length; i++)
 			this.frames[i] = new TMD_KeyFrame(this, data);
 	}
 
+	public int length() {
+		return 2 + 2 + frames.length * 8;
+	}
+
 	public boolean shouldIgnore() {
 		// unk1==1 recursive include?
 		// unk1==2 singular include?
-		if (!animation.shouldPruneChannels())
-			return false;
-		return unk1 != 0;
+		// if (!animation.shouldPruneChannels())
+		// return false;
+		// return unk1_M2;
+		return ignoreThisChannel;
 	}
 
 	@Override

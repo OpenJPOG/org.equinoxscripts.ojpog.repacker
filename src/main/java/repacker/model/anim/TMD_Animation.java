@@ -2,7 +2,6 @@ package repacker.model.anim;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 import repacker.model.TMD_IO;
 import repacker.model.TMD_Scene;
@@ -10,78 +9,84 @@ import repacker.model.TMD_Scene;
 public class TMD_Animation extends TMD_IO {
 	public final String name;
 	public final float length;
-	
-	// If these are both on prune the animation.
-	public final boolean unk1;
+
+	// If these are both on prune the animation?
+	/**
+	 * This animation is strange; if this is TRUE the animation is likely
+	 * broken?
+	 */
+	public final boolean different;
 	public final boolean unk2;
 	/**
 	 * Number of nodes relevant to this animation?
 	 */
 	public final int unk3;
-	public final TMD_Channel[] channels;
 	public final TMD_Channel[] channelNodeMap;
-	public int scene_AnimMeta;
-	
+
 	public boolean shouldPruneChannels() {
-		return unk1 && unk2;
+		return different && unk2;
 	}
 
 	public TMD_Animation(TMD_Scene scene, ByteBuffer data) throws UnsupportedEncodingException {
 		super(scene.file);
+		@SuppressWarnings("unused")
 		byte namelen = data.get();
-		name = read(data, 15).toLowerCase(); // rationalize the animation name
-		unk1 = data.getInt() != 0;
-		unk2 = data.getInt() != 0;
+		name = read(data, 15);
+		different = bool(data.getInt());
+		unk2 = bool(data.getInt());
 		unk3 = data.getInt();
 
 		length = data.getFloat();
 
-		// A table that maps channel data offsets to node IDs.
-		// nodeRemap[i][0] + C == dataStart[channel with that node]
-		// C is constant for each animation.
-		int[][] nodeRemap = new int[scene.nodes.length][2];
-		for (int i = 0; i < nodeRemap.length; i++) {
-			nodeRemap[i][0] = data.getInt();
-			nodeRemap[i][1] = i;
+		int eoa = 0;
+		int offset = data.position();
+		this.channelNodeMap = new TMD_Channel[scene.nodes.length];
+		for (int i = 0; i < scene.nodes.length; i++) {
+			int position = data.getInt(offset + 4 * i);
+			data.position(file.rawOffsetToFile(position));
+			channelNodeMap[i] = new TMD_Channel(this, data);
+			channelNodeMap[i].nodeID = i;
+			eoa = Math.max(eoa, data.position());
 		}
-		Arrays.sort(nodeRemap, (a, b) -> Integer.compare(a[0], b[0]));
-		channels = new TMD_Channel[scene.nodes.length];
-		channelNodeMap = new TMD_Channel[scene.nodes.length];
-		for (int c = 0; c < channels.length; c++) {
-			channels[c] = new TMD_Channel(this, data);
-			channels[c].nodeID = nodeRemap[c][1];
-			channelNodeMap[channels[c].nodeID] = channels[c];
-		}
+		data.position(eoa);
+	}
+
+	public void write(ByteBuffer data) {
+		data.put((byte) name.length()); // TODO doesn't always match
+		write(data, 15, name);
+		data.putInt(different ? 1 : 0);
+		data.putInt(unk2 ? 1 : 0);
+		data.putInt(unk3);
+
+		data.putFloat(length);
 	}
 
 	@Override
 	public void link() {
-		for (TMD_Channel c : channels)
+		// System.out.println(file.scene.sceneGraph(ff -> {
+		// TMD_Channel a = channelNodeMap[ff.id];
+		// return (a.usePositionKeys ? 1 : 0) + "" + (a.ignoreThisChannel ? 1 :
+		// 0);
+		// }));
+
+		for (TMD_Channel c : channelNodeMap)
 			c.link();
 
 		// Link nodeRef:
-		for (int i = 0; i < channels.length; i++)
-			channels[i].nodeRef = file.scene.nodes[channels[i].nodeID];
-
-		// if (unk1 != unk2) {
-		// System.out.println(name + " " + unk1 + " " + unk2 + " " + unk3);
-		// for (int i = 0; i < channels.length; i++)
-		// System.out.print(
-		// channels[i].nodeRef + "[l=" + channels[i].frames.length + ", k=" +
-		// channels[i].unk1 + "]");
-		// System.out.println();
-		// }
+		for (int i = 0; i < channelNodeMap.length; i++)
+			channelNodeMap[i].nodeRef = file.scene.nodes[channelNodeMap[i].nodeID];
 
 		// Link channel data
-		for (TMD_Channel c : channels) {
-			if (c.nodeRef != null)
+		for (TMD_Channel c : channelNodeMap) {
+			if (c.nodeRef != null) {
 				for (TMD_KeyFrame f : c.frames) {
-					f.localPos.set(f.pos);
 					f.localRot.set(f.rot);
-					// Supplied position keys seem wrong, revert to local
-					// position data. TODO
-					c.nodeRef.localPosition.getTranslation(f.localPos);
+					if (c.usePositionKeys)
+						f.localPos.set(f.pos);
+					else
+						c.nodeRef.localPosition.getTranslation(f.localPos);
 				}
+			}
 		}
 	}
 }

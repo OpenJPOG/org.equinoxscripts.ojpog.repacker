@@ -35,4 +35,9 @@ public class TMD_KeyFrame extends TMD_IO {
 		else
 			this.rot.set(file.tklRepo.rotations[rotKey]);
 	}
+
+	@Override
+	public String toString() {
+		return "{" + time + ": " + pos.toString() + ", " + rot.toString() + "}";
+	}
 }

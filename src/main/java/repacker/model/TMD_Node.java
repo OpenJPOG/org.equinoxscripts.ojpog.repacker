@@ -20,6 +20,7 @@ public class TMD_Node extends TMD_IO {
 		this.worldSkinningMatrix = new Matrix4(floats(b, new float[16]));
 		this.worldSkinningMatrix_Inv = new Matrix4(floats(b, new float[16]));
 
+		@SuppressWarnings("unused")
 		byte len = b.get(); // length of node_name (in theory)
 		this.node_name = read(b, 15);
 		this.parent = b.getShort();
@@ -36,6 +37,10 @@ public class TMD_Node extends TMD_IO {
 
 		this.localSkinningMatrix = new Matrix4();
 		this.localSkinningMatrix_Inv = new Matrix4();
+	}
+
+	public void write(ByteBuffer data) {
+
 	}
 
 	public final int id;

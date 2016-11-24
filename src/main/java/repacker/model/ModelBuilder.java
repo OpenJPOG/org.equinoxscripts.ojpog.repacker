@@ -140,7 +140,7 @@ public class ModelBuilder {
 			ModelAnimation anim = new ModelAnimation();
 			anim.id = a.name;
 			anim.nodeAnimations = new Array<>();
-			for (TMD_Channel c : a.channels) {
+			for (TMD_Channel c : a.channelNodeMap) {
 				if (c.nodeRef == null || c.shouldIgnore())
 					continue;
 				ModelNodeAnimation mna = new ModelNodeAnimation();

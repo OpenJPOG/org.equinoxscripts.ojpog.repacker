@@ -3,48 +3,66 @@ package repacker.model;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import repacker.model.anim.TMD_Animation;
 import repacker.model.ext.TKL_File;
 
 public class TMD_File extends TMD_IO {
 	public static final int SCENE_BLOCK_OFFSET = 0x40;
 
 	public final String category;
-	/**
-	 * Always 0x5849?
-	 */
-	public final short cst1;
-	/**
-	 * Always 0x07a80032, except sometimes 0x00880023 on skinned things.
-	 */
-	public final int acst2;
-	/**
-	 * Always zero
-	 */
-	public final short zer1;
 
 	public final int sceneBlockSize;
-	public final int[] unk2 = new int[3];
-	public final int[] zer2 = new int[4];
+
+	public int endOfScene() {
+		return SCENE_BLOCK_OFFSET + sceneBlockSize;
+	}
+
+	/**
+	 * Used to take the nodes listed in {@link TMD_Animation} and calculate the
+	 * in-file position for each node's channel.
+	 * 
+	 * Exact math is: Read Start: lookupAddress + 60 - file.animOffsetOffset
+	 */
+	public final int rawMemoryOffset;
+
+	public int rawOffsetToFile(int pos) {
+		return pos + 60 - rawMemoryOffset;
+	}
+
+	public int fileOffsetToRaw(int real) {
+		return real + rawMemoryOffset - 60;
+	}
+
+	public final byte[] unk2 = new byte[8];
+	public final int fileLength;
+	public final byte[] unk4 = new byte[8];
 
 	public final TMD_Scene scene;
 	public final TMD_MeshBlock meshes;
 
+	public final String source;
+	
+	public final TMD_Header_Block header;
+
 	public TMD_File(String k, ByteBuffer data) throws IOException {
 		super(null);
+		this.source = k;
 		this.file = this;
-		if (!read(data, 4).equals("TMDL"))
-			throw new IOException("Bad magic");
-		data.position(12);
+		this.header = new TMD_Header_Block(this, data);
+		
+		data.position(4);
+		zero(data, 4);
+		fileLength = data.getInt();
 		category = read(data, 8);
-		// Read some header info:
-		data.position(20);
-		cst1 = data.getShort();
-		acst2 = data.getInt();
-		zer1 = data.getShort();
+		data.get(unk4);
 		sceneBlockSize = data.getInt();
-		ints(data, unk2);
-		ints(data, zer2);
-
+		rawMemoryOffset = data.getInt();
+		data.get(unk2);
+		zero(data, 16);
+		byte[] misc = new byte[SCENE_BLOCK_OFFSET - data.position()];
+		data.get(misc);
+		System.out.println(source + "\t" + ModelExtractor.hex(unk4) + "\t" + ModelExtractor.hex(misc) + "\t"
+				+ ModelExtractor.hex(unk2));
 		this.scene = new TMD_Scene(this, data);
 		try {
 			this.meshes = new TMD_MeshBlock(this, data);
@@ -53,11 +71,10 @@ public class TMD_File extends TMD_IO {
 				throw (RuntimeException) e;
 			throw new RuntimeException(e);
 		}
-
-		if (data.hasRemaining())
-			System.out.println("File ends at " + data.capacity() + ", read ends at " + data.position() + ", remaining="
-					+ data.remaining());
 		this.link();
+	}
+
+	public void write(ByteBuffer data) {
 	}
 
 	public TKL_File tklRepo;
