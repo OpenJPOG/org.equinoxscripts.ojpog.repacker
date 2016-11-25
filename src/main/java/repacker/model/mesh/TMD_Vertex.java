@@ -1,4 +1,4 @@
-package repacker.model;
+package repacker.model.mesh;
 
 import java.nio.ByteBuffer;
 import java.util.Collections;
@@ -12,6 +12,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 
 import repacker.Utils;
+import repacker.model.scene.TMD_Node;
 
 public class TMD_Vertex {
 	public static final int SIZEOF = 4 * (3 + 3 + 2 + 2);

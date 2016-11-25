@@ -2,6 +2,8 @@ package repacker.model;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.HashSet;
+import java.util.Set;
 
 public class TMD_Header_Block extends TMD_IO {
 	public final String category;
@@ -19,14 +21,17 @@ public class TMD_Header_Block extends TMD_IO {
 
 	public final byte[] unk2 = new byte[8];
 	public final int fileLength;
-	public final byte[] unk4 = new byte[8];
+	public final byte[] unk4 = new byte[4];
 	public final byte[] unk3 = new byte[4];
 
+	public final int versionCode;
 	public final int numNodes;
 	public final int numAnimations;
 	public final int numS1, numS2;
 
 	public final int nodeHeaderOffset, animationDataOffset, nodeArrayOffset;
+
+	public static final Set<Integer> versions = new HashSet<>();
 
 	public TMD_Header_Block(TMD_File file, ByteBuffer data) throws IOException {
 		data.position(0);
@@ -35,8 +40,13 @@ public class TMD_Header_Block extends TMD_IO {
 			throw new IOException("Bad magic");
 
 		zero(data, 4);
-		fileLength = data.getInt();
+		fileLength = data.getInt(); // remaining
+		if (data.remaining() != fileLength)
+			System.err.println(fileLength + " vs " + data.remaining());
+
 		category = read(data, 8);
+		versionCode = data.getInt();
+		versions.add(versionCode);
 		data.get(unk4);
 		sceneBlockSize = data.getInt();
 		rawMemoryOffset = data.getInt();
@@ -68,7 +78,9 @@ public class TMD_Header_Block extends TMD_IO {
 
 	@Override
 	public String toString() {
-		return "Header[\n\tNodes=" + numNodes + " @ " + hex(nodeArrayOffset) + "\n\tAnims=" + numAnimations + " @ "
-				+ hex(animationDataOffset) + "\n]";
+		return "Header[\n\tVersion=" + versionCode + "\n\tNodes=" + numNodes + " @ " + hex(nodeArrayOffset)
+				+ "\n\tAnims=" + numAnimations + " @ " + hex(animationDataOffset) + "\n\tunk2=" + hex(unk2)
+				+ "\n\tunk3=" + hex(unk3) + "\n\tunk4=" + hex(unk4) + "\n\tnumS1=" + numS1 + "\n\tnumS2=" + numS2
+				+ "\n]";
 	}
 }

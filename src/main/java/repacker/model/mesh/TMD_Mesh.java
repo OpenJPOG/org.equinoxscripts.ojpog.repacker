@@ -1,4 +1,4 @@
-package repacker.model;
+package repacker.model.mesh;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import repacker.Utils;
+import repacker.model.TMD_IO;
 
 public class TMD_Mesh extends TMD_IO {
 	public final String material_name;

@@ -10,8 +10,6 @@ import java.nio.ByteOrder;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 
-import repacker.model.ModelExtractor;
-
 public class Utils {
 	public static ByteBuffer read(File f) {
 		byte[] buffer = new byte[1024];

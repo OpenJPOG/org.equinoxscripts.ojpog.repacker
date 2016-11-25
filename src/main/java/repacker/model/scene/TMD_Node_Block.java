@@ -1,8 +1,11 @@
-package repacker.model;
+package repacker.model.scene;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.function.Function;
+
+import repacker.model.TMD_File;
+import repacker.model.TMD_IO;
 
 public class TMD_Node_Block extends TMD_IO {
 	public final TMD_Node[] nodes;

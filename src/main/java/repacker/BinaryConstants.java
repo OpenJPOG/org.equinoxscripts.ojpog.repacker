@@ -2,8 +2,6 @@ package repacker;
 
 import java.util.Arrays;
 
-import repacker.model.ModelExtractor;
-
 public class BinaryConstants {
 	private int refValue;
 	private int[] constantBoundaries;

@@ -1,4 +1,4 @@
-package repacker.model;
+package repacker.model.scene;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -8,6 +8,7 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Quaternion;
 
 import repacker.Utils;
+import repacker.model.TMD_IO;
 
 public class TMD_Node extends TMD_IO {
 	private final TMD_Node_Block scene;

@@ -3,7 +3,6 @@ package repacker.model.anim;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
-import repacker.model.TMD_Animation_Block;
 import repacker.model.TMD_IO;
 
 public class TMD_Animation extends TMD_IO {

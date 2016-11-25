@@ -1,4 +1,4 @@
-package repacker.model;
+package repacker.model.export;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -36,9 +36,15 @@ import com.badlogic.gdx.utils.JsonReader;
 
 import repacker.Base;
 import repacker.G3DModelWriter;
+import repacker.model.TMD_File;
 import repacker.model.anim.TMD_Animation;
 import repacker.model.anim.TMD_Channel;
 import repacker.model.anim.TMD_KeyFrame;
+import repacker.model.mesh.TMD_Mesh;
+import repacker.model.mesh.TMD_Mesh_Group;
+import repacker.model.mesh.TMD_Mesh_Piece;
+import repacker.model.mesh.TMD_Vertex;
+import repacker.model.scene.TMD_Node;
 
 public class ModelBuilder {
 	public static final boolean enableSkinning = true;

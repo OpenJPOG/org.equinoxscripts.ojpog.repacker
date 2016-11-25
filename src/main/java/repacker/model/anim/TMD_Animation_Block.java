@@ -1,9 +1,10 @@
-package repacker.model;
+package repacker.model.anim;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
-import repacker.model.anim.TMD_Animation;
+import repacker.model.TMD_File;
+import repacker.model.TMD_IO;
 
 public class TMD_Animation_Block extends TMD_IO {
 

@@ -1,7 +1,10 @@
-package repacker.model;
+package repacker.model.mesh;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+
+import repacker.model.TMD_File;
+import repacker.model.TMD_IO;
 
 public class TMD_Mesh_Group extends TMD_IO {
 	public final TMD_Mesh[] members;

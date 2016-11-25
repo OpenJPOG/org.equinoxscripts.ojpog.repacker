@@ -6,7 +6,7 @@ import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 
 import repacker.model.TMD_IO;
-import repacker.model.TMD_Node;
+import repacker.model.scene.TMD_Node;
 
 public class TMD_Channel extends TMD_IO {
 	public final TMD_Animation animation;

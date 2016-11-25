@@ -1,4 +1,4 @@
-package repacker.model;
+package repacker;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,10 +9,10 @@ import java.util.stream.Stream;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 
-import repacker.Base;
-import repacker.Utils;
+import repacker.model.TMD_File;
 import repacker.model.anim.TMD_Animation;
 import repacker.model.anim.TMD_Channel;
+import repacker.model.export.ModelBuilder;
 
 public class ModelExtractor {
 	static {
@@ -86,7 +86,7 @@ public class ModelExtractor {
 	public static void main(String[] args) throws IOException, InterruptedException {
 		for (File base_input : Base.BASE_IN) {
 			for (File f : new File(base_input, "Data/Models").listFiles()) {
-				String[] find = { "ABeacon_hi.tmd", "WelcCntr_hi.tmd", "HuntPlat.tmd", "STurret.tmd", "Acro_hi.tmd" };
+				String[] find = {};//{ "ABeacon_hi.tmd", "WelcCntr_hi.tmd", "HuntPlat.tmd", "STurret.tmd", "Acro_hi.tmd" };
 				Stream<String> findS = Arrays.stream(find);
 				if (f.getName().endsWith(".tmd")
 						&& (find.length == 0 || findS.map(s -> f.getName().toLowerCase().contains(s.toLowerCase()))
@@ -100,11 +100,7 @@ public class ModelExtractor {
 							continue;
 						if (data.hasRemaining())
 							System.out.println("Read: " + f + ", leftover " + data.remaining());
-						// if (data.hasRemaining())
-						// System.out.println(file.scene.unkS1 + "\t" +
-						// file.meshes.unk1);
-//						System.out.println("Write " + file.source);
-						ModelBuilder.write(f.getName().substring(0, f.getName().length() - 4), file);
+//						ModelBuilder.write(f.getName().substring(0, f.getName().length() - 4), file);
 					} catch (Exception e) {
 						System.err.println("Err reading " + f);
 						e.printStackTrace();

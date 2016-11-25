@@ -86,8 +86,32 @@ public abstract class TMD_IO {
 			n[i] = b.getFloat();
 		return n;
 	}
-	
+
 	public static String hex(int i) {
 		return "0x" + Integer.toHexString(i);
+	}
+
+	public String bin(byte[] d) {
+		StringBuilder sb = new StringBuilder(9 * d.length);
+		for (byte f : d) {
+			String k = Integer.toBinaryString(f & 0xFF);
+			for (int j = k.length(); j < 8; j++)
+				sb.append('0');
+			sb.append(k);
+			sb.append(' ');
+		}
+		return sb.toString();
+	}
+
+	public static String hex(byte[] d) {
+		StringBuilder sb = new StringBuilder(3 * d.length);
+		for (byte f : d) {
+			String s = Integer.toHexString(f & 0xFF);
+			if (s.length() < 2)
+				sb.append("0");
+			sb.append(s);
+			sb.append(" ");
+		}
+		return sb.toString();
 	}
 }

@@ -1,4 +1,4 @@
-package repacker.model;
+package repacker.model.mesh;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -7,6 +7,8 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
 
 import repacker.Utils;
+import repacker.model.TMD_IO;
+import repacker.model.scene.TMD_Node;
 
 public class TMD_Mesh_Piece extends TMD_IO {
 	// this seems to be a bone mapping, NOT a nodes-with-this-mesh mapping
@@ -38,7 +40,7 @@ public class TMD_Mesh_Piece extends TMD_IO {
 		boundingExtents = Utils.readV3(b);
 
 		if (num_nodes > 10e6 || tris > 10e6 || verts > 10e6)
-			throw new RuntimeException("Bad mesh size");
+			throw new RuntimeException("Bad mesh size " + num_nodes + ", " + tris + ", " + verts);
 		meshParents = new int[num_nodes];
 		meshParentsRef = new TMD_Node[num_nodes];
 		for (int j = 0; j < meshParents.length; j++)
