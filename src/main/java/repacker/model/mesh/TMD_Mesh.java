@@ -11,8 +11,6 @@ import repacker.model.TMD_IO;
 public class TMD_Mesh extends TMD_IO {
 	public final String material_name;
 
-	public final int pieceCount;
-
 	public final TMD_Mesh_Piece[] pieces;
 
 	public final int totalTris;
@@ -25,7 +23,7 @@ public class TMD_Mesh extends TMD_IO {
 		super(file.file);
 		this.dataOffset = b.position();
 
-		pieceCount = b.getInt();
+		int pieceCount = b.getInt();
 		totalTris = b.getInt();
 		int totalVerts = b.getInt();
 
@@ -41,6 +39,24 @@ public class TMD_Mesh extends TMD_IO {
 			pieces[i] = new TMD_Mesh_Piece(this, b);
 
 		dataSize = b.position() - dataOffset;
+	}
+
+	@Override
+	public void write(ByteBuffer b) {
+		b.putInt(pieces.length);
+		b.putInt(totalTris);
+		b.putInt(verts.length);
+		write(b, 32, material_name);
+		for (TMD_Mesh_Piece p : pieces)
+			p.write(b);
+	}
+
+	@Override
+	public int length() {
+		int len = 4 + 4 + 4 + 32;
+		for (TMD_Mesh_Piece m : pieces)
+			len += m.length();
+		return len;
 	}
 
 	@Override

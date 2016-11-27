@@ -12,9 +12,10 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 
 import repacker.Utils;
+import repacker.model.TMD_IO;
 import repacker.model.scene.TMD_Node;
 
-public class TMD_Vertex {
+public class TMD_Vertex extends TMD_IO {
 	public static final int SIZEOF = 4 * (3 + 3 + 2 + 2);
 	public final TMD_Mesh_Piece adder;
 
@@ -24,6 +25,20 @@ public class TMD_Vertex {
 		normal = Utils.readV3(b);
 		b.get(skinningInfo);
 		texpos = new Vector2(b.getFloat(), b.getFloat());
+	}
+
+	@Override
+	public void write(ByteBuffer b) {
+		Utils.writeV3(b, position);
+		Utils.writeV3(b, normal);
+		b.put(skinningInfo);
+		b.putFloat(texpos.x);
+		b.putFloat(texpos.y);
+	}
+
+	@Override
+	public int length() {
+		return SIZEOF;
 	}
 
 	public final Vector3 position, normal;

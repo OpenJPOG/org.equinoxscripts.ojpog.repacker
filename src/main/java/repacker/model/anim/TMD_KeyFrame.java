@@ -40,4 +40,16 @@ public class TMD_KeyFrame extends TMD_IO {
 	public String toString() {
 		return "{" + time + ": " + pos.toString() + ", " + rot.toString() + "}";
 	}
+
+	@Override
+	public void write(ByteBuffer b) {
+		b.putFloat(time);
+		b.putShort((short) posKey);
+		b.putShort((short) rotKey);
+	}
+
+	@Override
+	public int length() {
+		return 4 + 2 + 2;
+	}
 }

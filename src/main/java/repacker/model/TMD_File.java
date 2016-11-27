@@ -22,16 +22,43 @@ public class TMD_File extends TMD_IO {
 		this.source = k;
 		this.file = this;
 		this.header = new TMD_Header_Block(this, data);
-//		System.out.println(this.header);
-		System.out.println(this.source + " " + hex(this.header.versionCode));
+		System.out.println(source + "\n" + header);
+		int nodeStart = data.position();
 		this.nodes = new TMD_Node_Block(this, data);
+		int animStart = data.position();
 		this.animations = new TMD_Animation_Block(this, data);
+		int meshStart = data.position();
 		this.meshes = new TMD_Mesh_Block(this, data);
-		
+		int eofStart = data.position();
 		this.link();
+
+		System.out.println("\tNodes:\t" + nodeStart);
+		System.out.println("\tAnims:\t" + animStart + "\t" + (animStart - nodeStart));
+		System.out.println("\tMeshs:\t" + meshStart + "\t" + (meshStart - animStart) + "\t" + (meshStart - nodeStart));
+		System.out.println("\tEOF:\t" + eofStart + "\t" + (eofStart - meshStart) + "\t" + (eofStart - animStart) + "\t"
+				+ (eofStart - nodeStart));
+		System.out.println("\tEnd:\t" + data.capacity());
+		System.out.println();
 	}
 
-	public void write(ByteBuffer data) {
+	@Override
+	public int length() throws IOException {
+		int size = header.length();
+		size = Math.max(size, header.nodeArrayOffset + nodes.length());
+		size = Math.max(size, header.animationDataOffset + animations.length());
+		size = Math.max(size, header.meshBlockOffset() + meshes.length());
+		return size;
+	}
+	
+	@Override
+	public void write(ByteBuffer data) throws IOException {
+		header.write(data);
+		data.position(header.nodeArrayOffset);
+		nodes.write(data);
+		data.position(header.animationDataOffset);
+		animations.write(data);
+		data.position(header.meshBlockOffset());
+		meshes.write(data);
 	}
 
 	public TKL_File tklRepo;

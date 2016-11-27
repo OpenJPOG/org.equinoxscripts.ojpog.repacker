@@ -22,6 +22,38 @@ public class TMD_Mesh_Group extends TMD_IO {
 	}
 
 	@Override
+	public void write(ByteBuffer b) {
+		b.putInt(members.length);
+		b.putInt(unk1);
+		for (float f : unk2)
+			b.putFloat(f);
+		for (TMD_Mesh m : members)
+			m.write(b);
+	}
+
+	@Override
+	public int length() {
+		int len = 4 + 4 + 4 * unk2.length;
+		for (TMD_Mesh m : members)
+			len += m.length();
+		return len;
+	}
+
+	public int totalTris() {
+		int i = 0;
+		for (TMD_Mesh m : members)
+			i += m.totalTris;
+		return i;
+	}
+
+	public int totalVerts() {
+		int i = 0;
+		for (TMD_Mesh m : members)
+			i += m.verts.length;
+		return i;
+	}
+
+	@Override
 	public void link() {
 		for (TMD_Mesh m : members)
 			m.link();

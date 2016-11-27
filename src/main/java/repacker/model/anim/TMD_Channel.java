@@ -33,8 +33,20 @@ public class TMD_Channel extends TMD_IO {
 			this.frames[i] = new TMD_KeyFrame(this, data);
 	}
 
+	@Override
 	public int length() {
-		return 2 + 2 + frames.length * 8;
+		int j = 2 + 2;
+		for (TMD_KeyFrame f : frames)
+			j += f.length();
+		return j;
+	}
+
+	@Override
+	public void write(ByteBuffer b) {
+		b.putShort((short) ((usePositionKeys ? 1 : 0) | (ignoreThisChannel ? 2 : 0)));
+		b.putShort((short) frames.length);
+		for (TMD_KeyFrame f : frames)
+			f.write(b);
 	}
 
 	public boolean shouldIgnore() {

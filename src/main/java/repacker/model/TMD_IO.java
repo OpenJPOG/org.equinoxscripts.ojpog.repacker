@@ -1,5 +1,6 @@
 package repacker.model;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
@@ -16,7 +17,7 @@ public abstract class TMD_IO {
 	public void link() {
 	}
 
-	public void zero(ByteBuffer b, int n) {
+	public static void zero(ByteBuffer b, int n) {
 		byte[] t = new byte[n];
 		b.get(t);
 		for (byte c : t)
@@ -24,7 +25,29 @@ public abstract class TMD_IO {
 				System.err.println("Non zero read");
 	}
 
-	public boolean bool(int i) {
+	public static void writeZero(ByteBuffer b, int n) {
+		b.put(new byte[n]);
+	}
+
+	public static long bitfield(boolean[] val) {
+		long v = 0;
+		for (int i = 0; i < val.length; i++)
+			if (val[i])
+				v |= (1 << i);
+		return v;
+	}
+
+	public static boolean[] bitfield(int value, int size) throws IOException {
+		boolean[] bs = new boolean[size];
+		int mask = (1 << size) - 1;
+		for (int i = 0; i < size; i++)
+			bs[i] = bool((value >> i) & 1);
+		if ((value & ~mask) != 0)
+			throw new IOException("Bad bitfield value: " + value);
+		return bs;
+	}
+
+	public static boolean bool(int i) {
 		if (i != 0 && i != 1)
 			new Exception("Reading as bool: " + i).printStackTrace();
 		return i != 0;
@@ -114,4 +137,8 @@ public abstract class TMD_IO {
 		}
 		return sb.toString();
 	}
+
+	public abstract void write(ByteBuffer b) throws IOException;
+
+	public abstract int length() throws IOException;
 }

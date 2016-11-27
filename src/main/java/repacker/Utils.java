@@ -3,6 +3,8 @@ package repacker;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -84,6 +86,12 @@ public class Utils {
 		return new Vector3(b.getFloat(), b.getFloat(), b.getFloat());
 	}
 
+	public static void writeV3(ByteBuffer b, Vector3 v) {
+		b.putFloat(v.x);
+		b.putFloat(v.y);
+		b.putFloat(v.z);
+	}
+
 	public static Quaternion unique(Quaternion q) {
 		// if (q.w < 0)
 		// q.mul(-1);
@@ -92,5 +100,20 @@ public class Utils {
 
 	public static Quaternion readQ(ByteBuffer b) {
 		return unique(new Quaternion(b.getFloat(), b.getFloat(), b.getFloat(), b.getFloat()));
+	}
+
+	public static void writeQ(ByteBuffer b, Quaternion q) {
+		b.putFloat(q.x);
+		b.putFloat(q.y);
+		b.putFloat(q.z);
+		b.putFloat(q.w);
+	}
+
+	public static void write(File file, ByteBuffer output) throws IOException {
+		byte[] data = new byte[output.capacity()];
+		output.get(data);
+		FileOutputStream fio = new FileOutputStream(file);
+		fio.write(data);
+		fio.close();
 	}
 }

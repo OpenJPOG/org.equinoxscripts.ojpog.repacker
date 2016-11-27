@@ -6,29 +6,11 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
-import com.badlogic.gdx.math.Quaternion;
-import com.badlogic.gdx.math.Vector3;
-
 import repacker.model.TMD_File;
-import repacker.model.anim.TMD_Animation;
-import repacker.model.anim.TMD_Channel;
-import repacker.model.export.ModelBuilder;
 
 public class ModelExtractor {
 	static {
 		System.loadLibrary("64".equals(System.getProperty("sun.arch.data.model")) ? "gdx64" : "gdx");
-	}
-
-	private static String prettyString(float[] f) {
-		StringBuilder out = new StringBuilder(f.length * 5);
-		out.append('[');
-		for (int i = 0; i < f.length; i++) {
-			if (i > 0)
-				out.append(", ");
-			out.append(String.format("%+.02f", f[i]));
-		}
-		out.append(']');
-		return out.toString();
 	}
 
 	public static String divide(String s, int n) {
@@ -64,16 +46,6 @@ public class ModelExtractor {
 		return s;
 	}
 
-	private static String hex(int[] d) {
-		StringBuilder sb = new StringBuilder();
-		for (int f : d) {
-			String s = Long.toHexString(f & 0xFFFFFFFFL);
-			sb.append(pad(s, 8));
-			sb.append(" ");
-		}
-		return sb.toString();
-	}
-
 	// skinned; { "dc", "dhbja", "djb", "dma", "dmbt", "df", "dha" }
 	private static final String[] FIND_CATS = {};// "dc", "dhbja", "djb", "dma",
 													// "dmbt", "df", "dha" };
@@ -86,26 +58,33 @@ public class ModelExtractor {
 	public static void main(String[] args) throws IOException, InterruptedException {
 		for (File base_input : Base.BASE_IN) {
 			for (File f : new File(base_input, "Data/Models").listFiles()) {
-				String[] find = {};//{ "ABeacon_hi.tmd", "WelcCntr_hi.tmd", "HuntPlat.tmd", "STurret.tmd", "Acro_hi.tmd" };
+				String[] find = {};// { "Cow.tmd", "Acro_hi.tmd",
+									// "Dilopho_hi.tmd" };
 				Stream<String> findS = Arrays.stream(find);
 				if (f.getName().endsWith(".tmd")
 						&& (find.length == 0 || findS.map(s -> f.getName().toLowerCase().contains(s.toLowerCase()))
 								.filter(s -> s).findAny().isPresent())) {
-					System.out.println("");
+					if (f.getName().equals("HuntPlat.tmd") || f.getName().equals("STurret.tmd")) {
+						System.err.println("Can't read strange variation: " + f);
+						continue;
+					}
 					try {
 						ByteBuffer data = Utils.read(f);
 						TMD_File file = new TMD_File(f.getName().substring(0, f.getName().length() - 4), data);
 						if (FIND_CATS.length > 0 && !Arrays.stream(FIND_CATS)
 								.filter(s -> file.header.category.equalsIgnoreCase(s)).findAny().isPresent())
 							continue;
-						if (data.hasRemaining())
-							System.out.println("Read: " + f + ", leftover " + data.remaining());
-//						ModelBuilder.write(f.getName().substring(0, f.getName().length() - 4), file);
+						// if (data.hasRemaining())
+						// System.out.println("Read: " + f + ", leftover " +
+						// data.remaining());
+						// ModelBuilder.write(f.getName().substring(0,
+						// f.getName().length() - 4), file);
 					} catch (Exception e) {
 						System.err.println("Err reading " + f);
 						e.printStackTrace();
 						Thread.sleep(1000);
 					}
+					// System.out.println(TMD_Header_Block.unks);
 				}
 			}
 		}

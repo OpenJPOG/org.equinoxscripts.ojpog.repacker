@@ -56,6 +56,27 @@ public class TKL_File extends TMD_IO {
 			rotations[i] = Utils.readQ(data);
 	}
 
+	@Override
+	public void write(ByteBuffer b) throws IOException {
+		b.put(unk1);
+		b.putInt(length() - (unk1.length + 4));
+		write(b, 6, category);
+		b.put(unk2);
+		b.putInt(positions.length);
+		b.putInt(rotations.length);
+	}
+
+	@Override
+	public int length() throws IOException {
+		int dataSize = 0;
+		dataSize += 6;
+		dataSize += unk2.length;
+		dataSize += 4 * 4;
+		dataSize += positions.length * 3 * 4;
+		dataSize += rotations.length * 4 * 4;
+		return dataSize + unk1.length + 4;
+	}
+
 	private static final Map<String, TKL_File> tkl = new HashMap<>();
 
 	public static TKL_File tkl(String name) {
@@ -80,8 +101,9 @@ public class TKL_File extends TMD_IO {
 				bos.close();
 				ByteBuffer data = ByteBuffer.wrap(bos.toByteArray()).order(ByteOrder.LITTLE_ENDIAN);
 				TKL_File file = new TKL_File(data);
-//				System.out.println("Loaded TKL file " + name + " (" + file.positions.length + " positions, "
-//						+ file.rotations.length + " rotations)");
+				// System.out.println("Loaded TKL file " + name + " (" +
+				// file.positions.length + " positions, "
+				// + file.rotations.length + " rotations)");
 				tkl.put(name, file);
 				return file;
 			} catch (Exception e) {

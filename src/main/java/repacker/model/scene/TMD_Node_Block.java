@@ -16,7 +16,6 @@ public class TMD_Node_Block extends TMD_IO {
 
 		nodes = new TMD_Node[file.header.numNodes];
 		for (int i = 0; i < file.header.numNodes; i++) {
-			data.position(file.header.nodeArrayOffset + i * 0xB0);
 			nodes[i] = new TMD_Node(this, data, i);
 		}
 	}
@@ -26,6 +25,20 @@ public class TMD_Node_Block extends TMD_IO {
 		for (TMD_Node node : nodes) {
 			node.link();
 		}
+	}
+
+	@Override
+	public int length() {
+		int len = 0;
+		for (int i = 0; i < len; i++)
+			len += nodes[i].length();
+		return len;
+	}
+
+	@Override
+	public void write(ByteBuffer b) {
+		for (TMD_Node n : nodes)
+			n.write(b);
 	}
 
 	private int calcMaxLen(TMD_Node node, String indent) {

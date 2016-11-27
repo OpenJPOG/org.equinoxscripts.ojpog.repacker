@@ -1,5 +1,6 @@
 package repacker.model.anim;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
@@ -50,6 +51,18 @@ public class TMD_Animation extends TMD_IO {
 		data.position(eoa);
 	}
 
+	@Override
+	public int length() throws IOException {
+		int len = 1 + 15;
+		len += 4 + 4 + 4;
+		len += 4;
+		len += 4 * file.header.numNodes;
+		for (TMD_Channel c : channelNodeMap)
+			len += c.length();
+		return len;
+	}
+
+	@Override
 	public void write(ByteBuffer data) {
 		data.put((byte) name.length()); // TODO doesn't always match
 		write(data, 15, name);
@@ -58,6 +71,20 @@ public class TMD_Animation extends TMD_IO {
 		data.putInt(unk3);
 
 		data.putFloat(length);
+		int offset = data.position() + 4 * file.header.numNodes;
+		int[] pos = new int[file.header.numNodes];
+		for (int i = 0; i < file.header.numNodes; i++) {
+			pos[i] = offset;
+			data.putInt(file.header.fileOffsetToRaw(offset));
+			offset += channelNodeMap[i].length();
+		}
+		int ol = data.limit();
+		for (int i = 0; i < file.header.numNodes; i++) {
+			data.position(pos[i]);
+			data.limit(i < file.header.numNodes - 1 ? pos[i + 1] : ol);
+			channelNodeMap[i].write(data);
+		}
+		data.limit(ol);
 	}
 
 	@Override

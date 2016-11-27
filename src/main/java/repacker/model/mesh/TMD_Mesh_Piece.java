@@ -70,6 +70,32 @@ public class TMD_Mesh_Piece extends TMD_IO {
 		dataSize = b.position() - dataOffset;
 	}
 
+	@Override
+	public void write(ByteBuffer b) {
+		b.putInt(this.tri_strip.length);
+		b.putInt(this.verts.length);
+		b.putInt(this.meshParents.length);
+		b.putInt(vertsRequired);
+		Utils.writeV3(b, boundingCenter);
+		Utils.writeV3(b, boundingExtents);
+		for (int j : meshParents)
+			b.putInt(j);
+		for (TMD_Vertex v : this.verts)
+			v.write(b);
+		for (short s : tri_strip)
+			b.putShort(s);
+	}
+
+	@Override
+	public int length() {
+		int len = 4 + 4 + 4 + 4 + 12 + 12;
+		len += 4 * meshParents.length;
+		for (TMD_Vertex v : this.verts)
+			len += v.length();
+		len += 2 * tri_strip.length;
+		return len;
+	}
+
 	public boolean isSkinned() {
 		return true;
 	}

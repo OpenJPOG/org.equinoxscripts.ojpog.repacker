@@ -1,5 +1,6 @@
 package repacker.model.anim;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
@@ -24,5 +25,31 @@ public class TMD_Animation_Block extends TMD_IO {
 	public void link() {
 		for (TMD_Animation a : animations)
 			a.link();
+	}
+
+	@Override
+	public int length() throws IOException {
+		int len = 4 * animations.length;
+		for (TMD_Animation a : animations)
+			len += a.length();
+		return len;
+	}
+
+	@Override
+	public void write(ByteBuffer b) throws IOException {
+		int[] pos = new int[animations.length];
+		int offset = b.position() + 4 * animations.length;
+		for (int i = 0; i < animations.length; i++) {
+			pos[i] = offset;
+			b.putInt(file.header.fileOffsetToRaw(pos[i]));
+			offset += animations[i].length();
+		}
+		int ol = b.limit();
+		for (int i = 0; i < animations.length; i++) {
+			b.position(pos[i]);
+			b.limit(i < file.header.numNodes - 1 ? pos[i + 1] : ol);
+			animations[i].write(b);
+		}
+		b.limit(ol);
 	}
 }
