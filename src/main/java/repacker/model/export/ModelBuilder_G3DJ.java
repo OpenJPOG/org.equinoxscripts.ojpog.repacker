@@ -46,7 +46,7 @@ import repacker.model.mesh.TMD_Mesh_Piece;
 import repacker.model.mesh.TMD_Vertex;
 import repacker.model.scene.TMD_Node;
 
-public class ModelBuilder {
+public class ModelBuilder_G3DJ {
 	public static final boolean enableSkinning = true;
 
 	public static void write(String id, TMD_File file) throws IOException {
@@ -212,7 +212,7 @@ public class ModelBuilder {
 			mm.vertices[o + 4] = v.normal.y;
 			mm.vertices[o + 5] = v.normal.z;
 			mm.vertices[o + 6] = v.texpos.x;
-			mm.vertices[o + 7] = v.texpos.y;
+			mm.vertices[o + 7] = 1 + v.texpos.y; // always negative.
 			if (m.isSkinned() && enableSkinning) {
 				for (int b = 0; b < m.maxBindingsPerVertex; b++) {
 					int bid = b < v.bones.length ? v.bones[b] % v.user.meshParentsRef.length : 0;

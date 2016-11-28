@@ -127,23 +127,7 @@ public class TMD_Mesh_Piece extends TMD_IO {
 
 		if (isSkinned()) {
 			for (TMD_Vertex v : verts) {
-				int count = 0;
-				while (count < 4 && v.skinningInfo[count] != 0)
-					count++;
-				v.bones = new int[count];
-				v.boneWeight = new float[count];
-				float totalWeight = 0;
-				for (int i = 0; i < count; i++) {
-					v.bones[i] = (v.skinningInfo[4 + i] & 0xFF) / 3;
-					totalWeight += (v.boneWeight[i] = (v.skinningInfo[i] & 0xFF) / 255f);
-				}
-				if (totalWeight == 0 || v.bones.length == 0) {
-					v.bones = new int[] { 0 };
-					v.boneWeight = new float[] { 1 };
-					totalWeight = 1;
-				}
-				for (int i = 0; i < v.boneWeight.length; i++)
-					v.boneWeight[i] /= totalWeight;
+				v.bindingsRawToID();
 			}
 
 			maxBindingsPerVertex = 0;

@@ -17,7 +17,7 @@ public class ModelRewriter {
 	public static void main(String[] args) throws IOException, InterruptedException {
 		for (File base_input : Base.BASE_IN) {
 			for (File f : new File(base_input, "Data/Models").listFiles()) {
-				String[] find = { "Cerato.tmd","Cerato_hi.tmd","Cerato_lo.tmd","Cerato_md.tmd" };
+				String[] find = { "Cerato.tmd", "Cerato_hi.tmd", "Cerato_lo.tmd", "Cerato_md.tmd" };
 				Stream<String> findS = Arrays.stream(find);
 				if (f.getName().endsWith(".tmd")
 						&& (find.length == 0 || findS.map(s -> f.getName().toLowerCase().contains(s.toLowerCase()))
@@ -27,8 +27,6 @@ public class ModelRewriter {
 						TMD_File file = new TMD_File(f.getName().substring(0, f.getName().length() - 4), data);
 						ByteBuffer output = ByteBuffer.allocate(file.length()).order(ByteOrder.LITTLE_ENDIAN);
 						file.write(output);
-						output.position(0);
-						TMD_File exp = new TMD_File("TEST", output);
 						output.position(0);
 						Utils.write(new File(Base.BASE_OUT + "/Data/Models", f.getName()), output);
 					} catch (Exception e) {

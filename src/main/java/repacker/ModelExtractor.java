@@ -7,6 +7,8 @@ import java.util.Arrays;
 import java.util.stream.Stream;
 
 import repacker.model.TMD_File;
+import repacker.model.export.ModelBuilder_DAE;
+import repacker.model.export.ModelBuilder_G3DJ;
 
 public class ModelExtractor {
 	static {
@@ -58,7 +60,7 @@ public class ModelExtractor {
 	public static void main(String[] args) throws IOException, InterruptedException {
 		for (File base_input : Base.BASE_IN) {
 			for (File f : new File(base_input, "Data/Models").listFiles()) {
-				String[] find = {};// { "Cow.tmd", "Acro_hi.tmd",
+				String[] find = {"Acro_hi.tmd"};// { "Cow.tmd", "Acro_hi.tmd",
 									// "Dilopho_hi.tmd" };
 				Stream<String> findS = Arrays.stream(find);
 				if (f.getName().endsWith(".tmd")
@@ -77,8 +79,8 @@ public class ModelExtractor {
 						// if (data.hasRemaining())
 						// System.out.println("Read: " + f + ", leftover " +
 						// data.remaining());
-						// ModelBuilder.write(f.getName().substring(0,
-						// f.getName().length() - 4), file);
+						ModelBuilder_DAE.write(f.getName().substring(0, f.getName().length() - 4), file);
+						ModelBuilder_G3DJ.write(f.getName().substring(0, f.getName().length() - 4), file);
 					} catch (Exception e) {
 						System.err.println("Err reading " + f);
 						e.printStackTrace();

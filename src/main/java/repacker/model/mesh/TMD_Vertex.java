@@ -65,8 +65,6 @@ public class TMD_Vertex extends TMD_IO {
 				for (int i = 0; i < bones.length; i++) {
 					if (bonesRef[i] != p.meshParentsRef[bones[i]])
 						System.err.println("Inconsistent binding state: Bad reference");
-					if ((bones[i] % p.meshParents.length) != (bones[i] % user.meshParents.length))
-						System.err.println("Inconsistent binding state: Won't be able to upload");
 				}
 			}
 		}
@@ -91,5 +89,40 @@ public class TMD_Vertex extends TMD_IO {
 			if (Math.abs(ft.getValue() - other.weights().get(ft.getKey())) > eps)
 				return false;
 		return true;
+	}
+
+	public void bindingsRawToID() {
+		int count = 0;
+		while (count < 4 && skinningInfo[count] != 0)
+			count++;
+		bones = new int[count];
+		boneWeight = new float[count];
+		float totalWeight = 0;
+		for (int i = 0; i < count; i++) {
+			// Multiplied by three just to be mean. It's ALWAYS a
+			// multiple of three
+			bones[i] = (skinningInfo[4 + i] & 0xFF) / 3;
+			boneWeight[i] = (skinningInfo[i] & 0xFF) / 255f;
+			totalWeight += boneWeight[i];
+		}
+		if (totalWeight == 0 || bones.length == 0) {
+			bones = new int[] { 0 };
+			boneWeight = new float[] { 1 };
+		}
+	}
+
+	public void bindingsIDToRaw() {
+		byte[] nskin;
+		if (bones == null || bones.length == 0) {
+			// bone zero, 100% weight
+			nskin = new byte[] { (byte) 0xFF, 0, 0, 0, 0, 0, 0, 0 };
+		} else {
+			nskin = new byte[8];
+			for (int i = 0; i < bones.length; i++) {
+				nskin[4 + i] = (byte) (3 * bones[i]);
+				nskin[i] = (byte) (0xFF * boneWeight[i]);
+			}
+		}
+		System.arraycopy(nskin, 0, skinningInfo, 0, 8);
 	}
 }
