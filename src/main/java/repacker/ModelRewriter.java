@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.stream.Stream;
 
 import repacker.model.TMD_File;
+import repacker.model.merge.ModelMerger_DAE;
 
 public class ModelRewriter {
 	static {
@@ -17,7 +18,7 @@ public class ModelRewriter {
 	public static void main(String[] args) throws IOException, InterruptedException {
 		for (File base_input : Base.BASE_IN) {
 			for (File f : new File(base_input, "Data/Models").listFiles()) {
-				String[] find = { "Cerato.tmd", "Cerato_hi.tmd", "Cerato_lo.tmd", "Cerato_md.tmd" };
+				String[] find = { "Anky.tmd" };
 				Stream<String> findS = Arrays.stream(find);
 				if (f.getName().endsWith(".tmd")
 						&& (find.length == 0 || findS.map(s -> f.getName().toLowerCase().contains(s.toLowerCase()))
@@ -25,6 +26,8 @@ public class ModelRewriter {
 					try {
 						ByteBuffer data = Utils.read(f);
 						TMD_File file = new TMD_File(f.getName().substring(0, f.getName().length() - 4), data);
+						File dae = new File(Base.BASE_OUT + "/Data/Models", file.source + ".dae");
+						ModelMerger_DAE merge = new ModelMerger_DAE(file, dae);
 						ByteBuffer output = ByteBuffer.allocate(file.length()).order(ByteOrder.LITTLE_ENDIAN);
 						file.write(output);
 						output.position(0);

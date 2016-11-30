@@ -40,4 +40,5 @@ One note is that the project does require the [LibGDX](https://github.com/libgdx
 All textures and models used come from a combination of the [Forgotten Mod](http://www.moddb.com/mods/jpog-the-forgotten) and the original game.  Initial file format specification written and published by [Andres James](http://tresed.trescom.org/jpog/jpog_formats.html).
 
 ## Disclaimer
-The information provided by this tool may not be used to break the law in any way, including but not limited to the use of the converted models in for profit projects.  I also make no assurances to the accuracy of this document; use at your own risk.
+The information provided by this tool may not be used to break the law in any way, including but not limited to the use of the converted models 
+in for profit projects and the redistribution of unpacked models.  I also make no assurances to the accuracy of this document; use at your own risk.

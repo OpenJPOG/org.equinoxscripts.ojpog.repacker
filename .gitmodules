@@ -1,0 +1,3 @@
+[submodule "jassimp"]
+	path = jassimp
+	url = git@github.com:Equinox-/jassimp.git

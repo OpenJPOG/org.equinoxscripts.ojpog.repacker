@@ -56,6 +56,7 @@ public class ModelBuilder_DAE {
 		public ColladaMesh(TMD_Mesh mesh) {
 			this.mid = "geom_" + mesh.hashCode();
 
+			System.out.println("Building ColladaMesh based on " + mesh.pieces.length + " pieces");
 			for (TMD_Mesh_Piece p : mesh.pieces)
 				for (TMD_Node n : p.meshParentsRef)
 					if (!nodeToName.containsKey(n))
@@ -228,6 +229,7 @@ public class ModelBuilder_DAE {
 	}
 
 	private final boolean lumpNodesIntoSingleAnimation = true;
+
 	private void writeAnimation(TMD_Animation a) {
 		ww.println("<animation id=\"" + a.name + "\">");
 		if (lumpNodesIntoSingleAnimation) {

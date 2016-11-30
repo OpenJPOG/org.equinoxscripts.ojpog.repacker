@@ -60,7 +60,7 @@ public class ModelExtractor {
 	public static void main(String[] args) throws IOException, InterruptedException {
 		for (File base_input : Base.BASE_IN) {
 			for (File f : new File(base_input, "Data/Models").listFiles()) {
-				String[] find = {"Acro_hi.tmd"};// { "Cow.tmd", "Acro_hi.tmd",
+				String[] find = {"Anky.tmd"};// { "Cow.tmd", "Acro_hi.tmd",
 									// "Dilopho_hi.tmd" };
 				Stream<String> findS = Arrays.stream(find);
 				if (f.getName().endsWith(".tmd")
