@@ -5,11 +5,11 @@ import java.nio.ByteBuffer;
 
 import repacker.model.anim.TMD_Animation_Block;
 import repacker.model.ext.TKL_File;
-import repacker.model.mesh.TMD_Mesh_Block;
+import repacker.model.mesh.TMD_DLoD_Block;
 import repacker.model.scene.TMD_Node_Block;
 
 public class TMD_File extends TMD_IO {
-	public final TMD_Mesh_Block meshes;
+	public final TMD_DLoD_Block dLoD;
 
 	public final String source;
 
@@ -22,23 +22,23 @@ public class TMD_File extends TMD_IO {
 		this.source = k;
 		this.file = this;
 		this.header = new TMD_Header_Block(this, data);
-		System.out.println(source + "\n" + header);
+//		System.out.println(source + "\n" + header);
 		int nodeStart = data.position();
 		this.nodes = new TMD_Node_Block(this, data);
 		int animStart = data.position();
 		this.animations = new TMD_Animation_Block(this, data);
 		int meshStart = data.position();
-		this.meshes = new TMD_Mesh_Block(this, data);
+		this.dLoD = new TMD_DLoD_Block(this, data);
 		int eofStart = data.position();
 		this.link();
 
-		System.out.println("\tNodes:\t" + nodeStart);
-		System.out.println("\tAnims:\t" + animStart + "\t" + (animStart - nodeStart));
-		System.out.println("\tMeshs:\t" + meshStart + "\t" + (meshStart - animStart) + "\t" + (meshStart - nodeStart));
-		System.out.println("\tEOF:\t" + eofStart + "\t" + (eofStart - meshStart) + "\t" + (eofStart - animStart) + "\t"
-				+ (eofStart - nodeStart));
-		System.out.println("\tEnd:\t" + data.capacity());
-		System.out.println();
+//		System.out.println("\tNodes:\t" + nodeStart);
+//		System.out.println("\tAnims:\t" + animStart + "\t" + (animStart - nodeStart));
+//		System.out.println("\tMeshs:\t" + meshStart + "\t" + (meshStart - animStart) + "\t" + (meshStart - nodeStart));
+//		System.out.println("\tEOF:\t" + eofStart + "\t" + (eofStart - meshStart) + "\t" + (eofStart - animStart) + "\t"
+//				+ (eofStart - nodeStart));
+//		System.out.println("\tEnd:\t" + data.capacity());
+//		System.out.println();
 	}
 
 	@Override
@@ -46,7 +46,7 @@ public class TMD_File extends TMD_IO {
 		int size = header.length();
 		size = Math.max(size, header.nodeArrayOffset + nodes.length());
 		size = Math.max(size, header.animationDataOffset + animations.length());
-		size = Math.max(size, header.meshBlockOffset() + meshes.length());
+		size = Math.max(size, header.meshBlockOffset() + dLoD.length());
 		return size;
 	}
 	
@@ -58,7 +58,11 @@ public class TMD_File extends TMD_IO {
 		data.position(header.animationDataOffset);
 		animations.write(data);
 		data.position(header.meshBlockOffset());
-		meshes.write(data);
+		dLoD.write(data);
+	}
+	
+	public void updateIntegrity() throws IOException {
+		header.fileLength = length() - 12;
 	}
 
 	public TKL_File tklRepo;
@@ -70,6 +74,6 @@ public class TMD_File extends TMD_IO {
 		this.header.link();
 		this.nodes.link();
 		this.animations.link();
-		this.meshes.link();
+		this.dLoD.link();
 	}
 }

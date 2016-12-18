@@ -7,6 +7,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
 
 import repacker.Utils;
+import repacker.model.TMD_File;
 import repacker.model.TMD_IO;
 import repacker.model.scene.TMD_Node;
 
@@ -19,18 +20,37 @@ public class TMD_Mesh_Piece extends TMD_IO {
 
 	private boolean loadedData;
 	private final ByteBuffer vertex, index;
+
 	public final TMD_Vertex[] verts;
 	public final short[] tri_strip;
-	public final TMD_Mesh root;
-
 	public final int vertsRequired;
 
-	public final int dataOffset, dataSize;
+	public TMD_Mesh_Piece(TMD_File file, TMD_Vertex[] verts, short[] tris, int[] meshParents) {
+		super(file);
+		this.meshParents = meshParents;
+		this.meshParentsRef = new TMD_Node[this.meshParents.length];
+
+		this.boundingCenter = new Vector3();
+		this.boundingExtents = new Vector3();
+
+		this.loadedData = true;
+		this.vertex = this.index = null;
+
+		this.verts = verts;
+		this.tri_strip = tris;
+		this.vertsRequired = this.verts.length;
+	}
+
+	public void computeBB() {
+		BoundingBox bb = new BoundingBox().inf();
+		for (TMD_Vertex v : verts)
+			bb.ext(v.position);
+		bb.getCenter(this.boundingCenter);
+		bb.getDimensions(this.boundingExtents).scl(0.5f);
+	}
 
 	public TMD_Mesh_Piece(TMD_Mesh root, ByteBuffer b) {
 		super(root.file);
-		this.dataOffset = b.position();
-
 		int tris = b.getInt();
 		int verts = b.getInt();
 		int num_nodes = b.getInt();
@@ -46,7 +66,6 @@ public class TMD_Mesh_Piece extends TMD_IO {
 		for (int j = 0; j < meshParents.length; j++)
 			meshParents[j] = b.getInt();
 
-		this.root = root;
 		this.verts = new TMD_Vertex[verts];
 		this.tri_strip = new short[tris];
 
@@ -66,8 +85,6 @@ public class TMD_Mesh_Piece extends TMD_IO {
 		b.position(indexEnd);
 
 		b.limit(origLim);
-
-		dataSize = b.position() - dataOffset;
 	}
 
 	@Override
@@ -122,7 +139,6 @@ public class TMD_Mesh_Piece extends TMD_IO {
 
 		for (int i = 0; i < meshParents.length; i++)
 			meshParentsRef[i] = file.nodes.nodes[meshParents[i]];
-
 		loadVtxAndTri();
 
 		if (isSkinned()) {

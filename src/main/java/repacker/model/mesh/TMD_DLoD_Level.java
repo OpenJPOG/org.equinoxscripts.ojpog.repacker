@@ -6,13 +6,16 @@ import java.nio.ByteBuffer;
 import repacker.model.TMD_File;
 import repacker.model.TMD_IO;
 
-public class TMD_Mesh_Group extends TMD_IO {
+/**
+ * One dynamic level of detail level.
+ */
+public class TMD_DLoD_Level extends TMD_IO {
 	public final TMD_Mesh[] members;
 
 	public final int unk1;
 	public final float[] unk2 = new float[4];
 
-	public TMD_Mesh_Group(TMD_File file, ByteBuffer b) throws UnsupportedEncodingException {
+	public TMD_DLoD_Level(TMD_File file, ByteBuffer b) throws UnsupportedEncodingException {
 		super(file);
 		this.members = new TMD_Mesh[b.getInt()];
 		this.unk1 = b.getInt();
@@ -57,5 +60,10 @@ public class TMD_Mesh_Group extends TMD_IO {
 	public void link() {
 		for (TMD_Mesh m : members)
 			m.link();
+	}
+
+	@Override
+	public String toString() {
+		return "LOD[members=" + members.length + ", t=" + totalTris() + ", v=" + totalVerts() + "]";
 	}
 }

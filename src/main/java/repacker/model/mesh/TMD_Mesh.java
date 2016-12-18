@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import repacker.Utils;
+import repacker.model.TMD_File;
 import repacker.model.TMD_IO;
 
 public class TMD_Mesh extends TMD_IO {
@@ -17,12 +18,22 @@ public class TMD_Mesh extends TMD_IO {
 
 	public final TMD_Vertex[] verts;
 
-	public final int dataOffset, dataSize;
+	public TMD_Mesh(TMD_File file, String material, TMD_Mesh_Piece[] pieces) {
+		super(file);
+		this.material_name = material;
+		this.pieces = pieces;
+		int ttl = 0;
+		int ttv = 0;
+		for (TMD_Mesh_Piece p : pieces) {
+			ttl += p.tri_strip.length - 2;
+			ttv += p.verts.length;
+		}
+		this.totalTris = ttl;
+		this.verts = new TMD_Vertex[ttv];
+	}
 
-	public TMD_Mesh(TMD_Mesh_Group file, ByteBuffer b) throws UnsupportedEncodingException {
+	public TMD_Mesh(TMD_DLoD_Level file, ByteBuffer b) throws UnsupportedEncodingException {
 		super(file.file);
-		this.dataOffset = b.position();
-
 		int pieceCount = b.getInt();
 		totalTris = b.getInt();
 		int totalVerts = b.getInt();
@@ -37,8 +48,6 @@ public class TMD_Mesh extends TMD_IO {
 		pieces = new TMD_Mesh_Piece[pieceCount];
 		for (int i = 0; i < pieces.length; i++)
 			pieces[i] = new TMD_Mesh_Piece(this, b);
-
-		dataSize = b.position() - dataOffset;
 	}
 
 	@Override
@@ -61,7 +70,7 @@ public class TMD_Mesh extends TMD_IO {
 
 	@Override
 	public String toString() {
-		return "MS[" + material_name + "]";
+		return "MS[" + material_name + " t=" + totalTris + " v=" + (verts == null ? "null" : "" + verts.length) + "]";
 	}
 
 	public void loadVtxAndTri() {
@@ -94,6 +103,9 @@ public class TMD_Mesh extends TMD_IO {
 			for (short s : p.tri_strip)
 				verts[s].usedBy(p);
 		}
+		for (int i = 0; i<verts.length; i++)
+			if (verts[i].user == null)
+				System.out.println("No user "  + i);
 
 		// Integrity check thing. Not needed in production.
 		Set<TMD_Vertex> check = new HashSet<>();

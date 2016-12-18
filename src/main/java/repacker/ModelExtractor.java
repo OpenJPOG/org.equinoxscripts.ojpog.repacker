@@ -8,7 +8,6 @@ import java.util.stream.Stream;
 
 import repacker.model.TMD_File;
 import repacker.model.export.ModelBuilder_DAE;
-import repacker.model.export.ModelBuilder_G3DJ;
 
 public class ModelExtractor {
 	static {
@@ -54,18 +53,22 @@ public class ModelExtractor {
 
 	private static final String[] DINOS = { "Acro_hi.tmd", "Dilopho_hi.tmd", "Alberto_hi.tmd", "Allo_hi.tmd",
 			"Anky_hi.tmd", "Brach_hi.tmd", "Camara_hi.tmd", "Carcha_hi.tmd", "Cerato_hi.tmd", "Cory_hi.tmd",
-			"Galli_hi.tmd", "Goat.tmd", "Cow.tmd", "Homalo_hi.tmd", "Pachy_hi.tmd", "Para_hi.tmd", "Raptor_hi.tmd",
-			"Steg_hi.tmd", "Styrac_hi.tmd", "TRex_hi.tmd" };
+			"Galli_hi.tmd", "Homalo_hi.tmd", "Pachy_hi.tmd", "Para_hi.tmd", "Raptor_hi.tmd", "Steg_hi.tmd",
+			"Styrac_hi.tmd", "TRex_hi.tmd", "Tricera_hi.tmd", "Toro_hi.tmd", "Dryo_hi.tmd", "Edmont_hi.tmd",
+			"Kentro_hi.tmd", "Ourano_hi.tmd", "Spino_hi.tmd" };
+	private static final String[] FOOD = { "Goat.tmd", "Cow.tmd" };
+	private static final String[] HUMANS = { "Cleaner.tmd", "Ranger.tmd", "VisFEnv.tmd", "VisFneut.tmd", "VisFVlnt.tmd",
+			"VisMEnv.tmd", "VisMNeut.tmd", "VisMVlnt.tmd" };
+	private static final String[] ACTORS = Stream.of(DINOS, FOOD, HUMANS).flatMap(a -> Arrays.stream(a))
+			.toArray(a -> new String[a]);
 
 	public static void main(String[] args) throws IOException, InterruptedException {
 		for (File base_input : Base.BASE_IN) {
-			for (File f : new File(base_input, "Data/Models").listFiles()) {
-				String[] find = {"Anky.tmd"};// { "Cow.tmd", "Acro_hi.tmd",
-									// "Dilopho_hi.tmd" };
+			for (File f : new File(base_input, "Data/Models/backup").listFiles()) {
+				String[] find = { "Anky.tmd" };
 				Stream<String> findS = Arrays.stream(find);
-				if (f.getName().endsWith(".tmd")
-						&& (find.length == 0 || findS.map(s -> f.getName().toLowerCase().contains(s.toLowerCase()))
-								.filter(s -> s).findAny().isPresent())) {
+				if (f.getName().endsWith(".tmd") && (find.length == 0 || findS
+						.filter(s -> f.getName().toLowerCase().contains(s.toLowerCase())).findAny().isPresent())) {
 					if (f.getName().equals("HuntPlat.tmd") || f.getName().equals("STurret.tmd")) {
 						System.err.println("Can't read strange variation: " + f);
 						continue;
@@ -76,11 +79,14 @@ public class ModelExtractor {
 						if (FIND_CATS.length > 0 && !Arrays.stream(FIND_CATS)
 								.filter(s -> file.header.category.equalsIgnoreCase(s)).findAny().isPresent())
 							continue;
+
 						// if (data.hasRemaining())
 						// System.out.println("Read: " + f + ", leftover " +
 						// data.remaining());
-						ModelBuilder_DAE.write(f.getName().substring(0, f.getName().length() - 4), file);
-						ModelBuilder_G3DJ.write(f.getName().substring(0, f.getName().length() - 4), file);
+						 ModelBuilder_DAE.write(f.getName().substring(0,
+						 f.getName().length() - 4), file);
+						// ModelBuilder_G3DJ.write(f.getName().substring(0,
+						// f.getName().length() - 4), file);
 					} catch (Exception e) {
 						System.err.println("Err reading " + f);
 						e.printStackTrace();

@@ -26,7 +26,7 @@ public class TMD_Header_Block extends TMD_IO {
 	public final int unk2_1;
 	public final int unk2_2;
 
-	public final int fileLength;
+	public int fileLength;
 
 	/**
 	 * 584117868617 or 8418139199561
@@ -53,7 +53,7 @@ public class TMD_Header_Block extends TMD_IO {
 		zero(data, 4);
 		fileLength = data.getInt(); // remaining
 		if (data.remaining() != fileLength)
-			System.err.println(fileLength + " vs " + data.remaining());
+			System.err.println("File length isn't remaining " + fileLength + " vs " + data.remaining());
 
 		category = read(data, 8);
 		versionMagic = data.getLong();

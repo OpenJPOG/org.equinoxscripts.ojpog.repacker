@@ -1,9 +1,11 @@
 package repacker.model.mesh;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -25,6 +27,23 @@ public class TMD_Vertex extends TMD_IO {
 		normal = Utils.readV3(b);
 		b.get(skinningInfo);
 		texpos = new Vector2(b.getFloat(), b.getFloat());
+	}
+
+	public TMD_Vertex(TMD_Mesh_Piece p, Vector3 pos, Vector3 nrm, Vector2 tex, Map<Integer, Float> weights) {
+		this.adder = p;
+		this.position = pos;
+		this.normal = nrm;
+		this.texpos = tex;
+		List<Entry<Integer, Float>> binds = new ArrayList<>(weights.entrySet());
+		binds.sort((a, b) -> -Float.compare(a.getValue(), b.getValue()));
+		int cnt = Math.min(4, binds.size());
+		this.bones = new int[cnt];
+		this.boneWeight = new float[cnt];
+		for (int i = 0; i < cnt; i++) {
+			this.bones[i] = binds.get(i).getKey().intValue();
+			this.boneWeight[i] = binds.get(i).getValue().floatValue();
+		}
+		bindingsIDToRaw();
 	}
 
 	@Override

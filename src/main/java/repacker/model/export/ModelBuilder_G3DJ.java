@@ -19,7 +19,6 @@ import com.badlogic.gdx.graphics.g3d.loader.G3dModelLoader;
 import com.badlogic.gdx.graphics.g3d.model.data.ModelAnimation;
 import com.badlogic.gdx.graphics.g3d.model.data.ModelData;
 import com.badlogic.gdx.graphics.g3d.model.data.ModelMaterial;
-import com.badlogic.gdx.graphics.g3d.model.data.ModelMaterial.MaterialType;
 import com.badlogic.gdx.graphics.g3d.model.data.ModelMesh;
 import com.badlogic.gdx.graphics.g3d.model.data.ModelMeshPart;
 import com.badlogic.gdx.graphics.g3d.model.data.ModelNode;
@@ -41,7 +40,6 @@ import repacker.model.anim.TMD_Animation;
 import repacker.model.anim.TMD_Channel;
 import repacker.model.anim.TMD_KeyFrame;
 import repacker.model.mesh.TMD_Mesh;
-import repacker.model.mesh.TMD_Mesh_Group;
 import repacker.model.mesh.TMD_Mesh_Piece;
 import repacker.model.mesh.TMD_Vertex;
 import repacker.model.scene.TMD_Node;
@@ -86,9 +84,7 @@ public class ModelBuilder_G3DJ {
 		{
 			ModelNode root = model.nodes.get(0);
 			int aliasOffset = root.children.length;
-			int meshCount = 0;
-			for (TMD_Mesh_Group g : file.meshes.meshes)
-				meshCount += g.members.length;
+			int meshCount = file.dLoD.levels[0].members.length;
 
 			root.children = Arrays.copyOf(root.children, root.children.length + meshCount);
 			Vector3 aliasTranslation;
@@ -100,34 +96,33 @@ public class ModelBuilder_G3DJ {
 			}
 
 			int meshID = 0;
-			for (TMD_Mesh_Group g : file.meshes.meshes)
-				for (TMD_Mesh mesh : g.members) {
-					mats.add(mesh.material_name);
-					model.meshes.add(makeMesh(mesh));
+			for (TMD_Mesh mesh : file.dLoD.levels[0].members) {
+				mats.add(mesh.material_name);
+				model.meshes.add(makeMesh(mesh));
 
-					ModelNode alias = root.children[aliasOffset + meshID] = new ModelNode();
-					alias.id = "mesh_alias_" + mesh.hashCode();
-					alias.translation = new Vector3(aliasTranslation);
-					alias.rotation = new Quaternion(aliasRotation);
-					alias.meshId = "m_" + mesh.hashCode();
+				ModelNode alias = root.children[aliasOffset + meshID] = new ModelNode();
+				alias.id = "mesh_alias_" + mesh.hashCode();
+				alias.translation = new Vector3(aliasTranslation);
+				alias.rotation = new Quaternion(aliasRotation);
+				alias.meshId = "m_" + mesh.hashCode();
 
-					alias.parts = new ModelNodePart[mesh.pieces.length];
-					for (int pieceID = 0; pieceID < mesh.pieces.length; pieceID++) {
-						TMD_Mesh_Piece piece = mesh.pieces[pieceID];
-						ModelNodePart part = alias.parts[pieceID] = new ModelNodePart();
+				alias.parts = new ModelNodePart[mesh.pieces.length];
+				for (int pieceID = 0; pieceID < mesh.pieces.length; pieceID++) {
+					TMD_Mesh_Piece piece = mesh.pieces[pieceID];
+					ModelNodePart part = alias.parts[pieceID] = new ModelNodePart();
 
-						part.meshPartId = "mp_" + piece.hashCode();
-						part.materialId = mesh.material_name;
-						if (enableSkinning) {
-							part.bones = new ArrayMap<>();
-							for (int i = 0; i < piece.meshParentsRef.length; i++) {
-								TMD_Node node = piece.meshParentsRef[i];
-								part.bones.put(node.node_name, new Matrix4(node.worldPosition));
-							}
+					part.meshPartId = "mp_" + piece.hashCode();
+					part.materialId = mesh.material_name;
+					if (enableSkinning) {
+						part.bones = new ArrayMap<>();
+						for (int i = 0; i < piece.meshParentsRef.length; i++) {
+							TMD_Node node = piece.meshParentsRef[i];
+							part.bones.put(node.node_name, new Matrix4(node.worldPosition));
 						}
 					}
-					meshID++;
 				}
+				meshID++;
+			}
 		}
 
 		for (String mat : mats) {

@@ -8,11 +8,20 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 
 public class Utils {
+	public static void verifyMagic(ByteBuffer b, byte[] magic) {
+		byte[] tmp = new byte[magic.length];
+		b.get(tmp);
+		for (int i = 0; i < tmp.length; i++)
+			if (tmp[i] != magic[i])
+				throw new RuntimeException("Bad magic: " + Arrays.toString(tmp));
+	}
+
 	public static ByteBuffer read(File f) {
 		byte[] buffer = new byte[1024];
 		try {
@@ -29,8 +38,19 @@ public class Utils {
 			bos.close();
 			return ByteBuffer.wrap(bos.toByteArray()).order(ByteOrder.LITTLE_ENDIAN);
 		} catch (Exception e) {
+			e.printStackTrace();
 			return null;
 		}
+	}
+
+	public static String makePermitted(String s) {
+		char[] c = new char[s.length()];
+		for (int i = 0; i < s.length(); i++)
+			if (!Character.isJavaIdentifierPart(s.charAt(i)))
+				c[i] = '_';
+			else
+				c[i] = s.charAt(i);
+		return new String(c);
 	}
 
 	public static boolean isPermitted(String s) {
@@ -110,7 +130,7 @@ public class Utils {
 	}
 
 	public static void write(File file, ByteBuffer output) throws IOException {
-		byte[] data = new byte[output.capacity()];
+		byte[] data = new byte[output.remaining()];
 		output.get(data);
 		FileOutputStream fio = new FileOutputStream(file);
 		fio.write(data);

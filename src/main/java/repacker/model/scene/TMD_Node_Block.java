@@ -76,4 +76,25 @@ public class TMD_Node_Block extends TMD_IO {
 			}
 		return graph.toString();
 	}
+
+	private TMD_Node byName(TMD_Node t, String s) {
+		if (t.node_name.equals(s))
+			return t;
+		if (t.childRef != null)
+			for (TMD_Node n : t.childRef) {
+				TMD_Node f = byName(n, s);
+				if (f != null)
+					return f;
+			}
+		return null;
+	}
+
+	public TMD_Node byName(String s) {
+		for (TMD_Node n : nodes) {
+			TMD_Node f = byName(n, s);
+			if (f != null)
+				return f;
+		}
+		return null;
+	}
 }

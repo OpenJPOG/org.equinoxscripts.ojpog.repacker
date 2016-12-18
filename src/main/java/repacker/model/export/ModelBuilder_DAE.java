@@ -7,18 +7,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import com.badlogic.gdx.math.Matrix4;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 
 import repacker.Base;
@@ -26,112 +22,11 @@ import repacker.model.TMD_File;
 import repacker.model.anim.TMD_Animation;
 import repacker.model.anim.TMD_Channel;
 import repacker.model.anim.TMD_KeyFrame;
-import repacker.model.export.ModelBuilder_DAE.ColladaMesh.ColladaVertex;
+import repacker.model.export.FullMesh.FullMeshVertex;
 import repacker.model.mesh.TMD_Mesh;
-import repacker.model.mesh.TMD_Mesh_Group;
-import repacker.model.mesh.TMD_Mesh_Piece;
-import repacker.model.mesh.TMD_Vertex;
 import repacker.model.scene.TMD_Node;
 
 public class ModelBuilder_DAE {
-	public static class ColladaMesh {
-		public static class ColladaVertex {
-			public final Vector3 pos = new Vector3();
-			public final Vector3 nrm = new Vector3();
-			/**
-			 * tex.y is always negative; this means "real" tex coord is 1+y
-			 */
-			public final Vector2 tex = new Vector2();
-			public final Map<TMD_Node, Float> weights = new HashMap<>();
-		}
-
-		public final String mid;
-
-		public final ColladaVertex[] verts;
-		public final String materialName;
-		public final short[] tris;
-		public final Map<TMD_Node, Integer> nodeToName = new HashMap<>();
-		public final TMD_Node[] nodes;
-
-		public ColladaMesh(TMD_Mesh mesh) {
-			this.mid = "geom_" + mesh.hashCode();
-
-			System.out.println("Building ColladaMesh based on " + mesh.pieces.length + " pieces");
-			for (TMD_Mesh_Piece p : mesh.pieces)
-				for (TMD_Node n : p.meshParentsRef)
-					if (!nodeToName.containsKey(n))
-						nodeToName.put(n, nodeToName.size());
-			this.nodes = new TMD_Node[nodeToName.size()];
-			for (Entry<TMD_Node, Integer> e : nodeToName.entrySet())
-				this.nodes[e.getValue()] = e.getKey();
-			this.materialName = mesh.material_name;
-			short[] remap = new short[mesh.verts.length];
-			Arrays.fill(remap, (short) -1);
-			List<ColladaVertex> vts = new ArrayList<>(mesh.verts.length);
-			main: for (short i = 0; i < mesh.verts.length; i++) {
-				TMD_Vertex baz = mesh.verts[i];
-				for (short j = 0; j < vts.size(); j++) {
-					if (vts.get(j).pos.epsilonEquals(baz.position, 1e-3f)
-							&& vts.get(j).tex.epsilonEquals(baz.texpos, 1e-2f)) {
-						remap[i] = j;
-						continue main;
-					}
-				}
-				remap[i] = (short) vts.size();
-				ColladaVertex vt = new ColladaVertex();
-				vt.pos.set(baz.position);
-				vt.nrm.set(baz.normal);
-				vt.tex.set(baz.texpos);
-				vt.weights.putAll(baz.weights());
-				vts.add(vt);
-			}
-			this.verts = vts.toArray(new ColladaVertex[vts.size()]);
-
-			int th = 0;
-			short[] tris = new short[mesh.totalTris * 3];
-			for (TMD_Mesh_Piece p : mesh.pieces) {
-				int j = 0;
-				tris: for (int i = 2; i < p.tri_strip.length; i++) {
-					short a, b, c;
-					if ((j++ & 1) == 0) {
-						a = remap[p.tri_strip[i - 2]];
-						b = remap[p.tri_strip[i - 1]];
-						c = remap[p.tri_strip[i - 0]];
-					} else {
-						a = remap[p.tri_strip[i - 0]];
-						b = remap[p.tri_strip[i - 1]];
-						c = remap[p.tri_strip[i - 2]];
-					}
-					if (a == b || b == c || c == a)
-						continue;
-					// Repeat?
-					for (int r = 0; r < th - 2; r += 3) {
-						short a0 = tris[r];
-						short b0 = tris[r + 1];
-						short c0 = tris[r + 2];
-						if (a == a0 && b == b0 && c == c0)
-							continue tris;
-						else if (a == b0 && b == c0 && c == a0)
-							continue tris;
-						else if (a == c0 && b == a0 && c == b0)
-							continue tris;
-						else if (a == a0 && b == c0 && c == b0)
-							continue tris;
-						else if (a == b0 && b == a0 && c == c0)
-							continue tris;
-						else if (a == c0 && b == b0 && c == a0)
-							continue tris;
-					}
-					// Write
-					tris[th++] = a;
-					tris[th++] = b;
-					tris[th++] = c;
-				}
-			}
-			this.tris = Arrays.copyOf(tris, th);
-		}
-	}
-
 	public static void write(String id, TMD_File file) throws IOException {
 		File out = new File(Base.BASE_OUT, "Data/Models/" + id + ".dae");
 		new ModelBuilder_DAE(out, file);
@@ -139,7 +34,7 @@ public class ModelBuilder_DAE {
 
 	private final PrintStream ww;
 	private final TMD_File file;
-	private final Map<TMD_Mesh, ColladaMesh> meshes = new HashMap<>();
+	private final Map<TMD_Mesh, FullMesh> meshes = new HashMap<>();
 
 	private ModelBuilder_DAE(File out, TMD_File file) throws FileNotFoundException {
 		this.file = file;
@@ -265,7 +160,7 @@ public class ModelBuilder_DAE {
 
 	private void writeControllers() {
 		ww.println("<library_controllers>");
-		for (ColladaMesh m : meshes.values()) {
+		for (FullMesh m : meshes.values()) {
 			ww.println("<controller id=\"" + m.mid + "_skin\">");
 			ww.println("<skin source=\"#" + m.mid + "\">");
 			{
@@ -273,7 +168,7 @@ public class ModelBuilder_DAE {
 				{
 					ww.print("<Name_array id=\"" + m.mid + "_joints_array\" count=\"" + m.nodes.length + "\">");
 					StringBuilder sb = new StringBuilder();
-					for (TMD_Node n : m.nodes) {
+					for (TMD_Node n : m.nodes(file)) {
 						if (sb.length() > 0)
 							sb.append(' ');
 						sb.append(n.node_name);
@@ -295,7 +190,7 @@ public class ModelBuilder_DAE {
 					ww.print("<float_array id=\"" + m.mid + "_bind_poses_array\" count=\"" + (m.nodes.length * 16)
 							+ "\">");
 					StringBuilder sb = new StringBuilder();
-					for (TMD_Node n : m.nodes) {
+					for (TMD_Node n : m.nodes(file)) {
 						if (sb.length() > 0)
 							sb.append(' ');
 						sb.append(matrixToDAE(n.worldSkinningMatrix_Inv));
@@ -313,7 +208,7 @@ public class ModelBuilder_DAE {
 			}
 			Map<Float, Integer> weights = new HashMap<>();
 			{
-				for (ColladaVertex v : m.verts)
+				for (FullMeshVertex v : m.verts)
 					for (Float f : v.weights.values())
 						if (!weights.containsKey(f))
 							weights.put(f, weights.size());
@@ -355,7 +250,7 @@ public class ModelBuilder_DAE {
 				{
 					ww.print("<vcount>");
 					StringBuilder s = new StringBuilder(3 * m.verts.length);
-					for (ColladaVertex v : m.verts) {
+					for (FullMeshVertex v : m.verts) {
 						if (s.length() > 0)
 							s.append(' ');
 						s.append(v.weights.size());
@@ -366,11 +261,12 @@ public class ModelBuilder_DAE {
 				{
 					ww.print("<v>");
 					StringBuilder s = new StringBuilder(8 * m.verts.length * 2);
-					for (ColladaVertex v : m.verts)
-						for (Entry<TMD_Node, Float> e : v.weights.entrySet()) {
+					for (FullMeshVertex v : m.verts)
+						for (Entry<String, Float> e : v.weights.entrySet()) {
 							if (s.length() > 0)
 								s.append(' ');
-							s.append(m.nodeToName.get(e.getKey())).append(' ').append(weights.get(e.getValue()));
+							s.append(m.nodeToName.get(e.getKey())).append(' ')
+									.append(weights.get(e.getValue()));
 						}
 					ww.print(s.toString());
 					ww.println("</v>");
@@ -392,18 +288,14 @@ public class ModelBuilder_DAE {
 	}
 
 	private void remapMeshes() {
-		for (TMD_Mesh_Group g : file.meshes.meshes)
-			for (TMD_Mesh m : g.members) {
-				meshes.put(m, new ColladaMesh(m));
-				return;
-			}
+		for (TMD_Mesh m : file.dLoD.levels[0].members)
+			meshes.put(m, new FullMesh(m));
 	}
 
 	private void writeLibraryMaterials() {
 		Set<String> images = new HashSet<>();
-		for (TMD_Mesh_Group g : file.meshes.meshes)
-			for (TMD_Mesh m : g.members)
-				images.add(m.material_name);
+		for (TMD_Mesh m : file.dLoD.levels[0].members)
+			images.add(m.material_name);
 		// images
 		{
 			ww.println("<library_images>");
@@ -496,7 +388,7 @@ public class ModelBuilder_DAE {
 				writeNode(n);
 			}
 
-		for (ColladaMesh c : meshes.values()) {
+		for (FullMesh c : meshes.values()) {
 			ww.println("<node id=\"fake_" + c.mid + "\" name=\"fake_" + c.mid + "\">");
 			// ww.println("<instance_geometry url=\"#" + c.mid + "\"
 			// name=\"instance_" + c.mid + "\"/>");
@@ -522,14 +414,14 @@ public class ModelBuilder_DAE {
 
 	private void writeGeometries() {
 		ww.println("<library_geometries>");
-		for (ColladaMesh cm : meshes.values()) {
+		for (FullMesh cm : meshes.values()) {
 			ww.println("<geometry id=\"" + cm.mid + "\" name=\"" + cm.mid + "\"><mesh>");
 			// emit the pos, nrm, and tex
 			for (String type : new String[] { "positions", "normals", "texcoords" }) {
 				int stride = type.equals("texcoords") ? 2 : 3;
 				ww.println("<source id=\"" + cm.mid + "_" + type + "\">");
 				StringBuilder sb = new StringBuilder(5 * 3 * cm.verts.length);
-				for (ColladaVertex v : cm.verts) {
+				for (FullMeshVertex v : cm.verts) {
 					if (sb.length() > 0)
 						sb.append(' ');
 					if (type.equals("texcoords"))

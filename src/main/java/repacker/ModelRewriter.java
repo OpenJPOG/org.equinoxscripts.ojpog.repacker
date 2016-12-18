@@ -17,7 +17,7 @@ public class ModelRewriter {
 
 	public static void main(String[] args) throws IOException, InterruptedException {
 		for (File base_input : Base.BASE_IN) {
-			for (File f : new File(base_input, "Data/Models").listFiles()) {
+			for (File f : new File(base_input, "Data/Models/backup").listFiles()) {
 				String[] find = { "Anky.tmd" };
 				Stream<String> findS = Arrays.stream(find);
 				if (f.getName().endsWith(".tmd")
@@ -26,12 +26,20 @@ public class ModelRewriter {
 					try {
 						ByteBuffer data = Utils.read(f);
 						TMD_File file = new TMD_File(f.getName().substring(0, f.getName().length() - 4), data);
-						File dae = new File(Base.BASE_OUT + "/Data/Models", file.source + ".dae");
+						File dae = new File(Base.BASE_OUT + "/Data/Models", file.source + "_mod.dae");
 						ModelMerger_DAE merge = new ModelMerger_DAE(file, dae);
+						merge.apply();
+
+						file.updateIntegrity();
 						ByteBuffer output = ByteBuffer.allocate(file.length()).order(ByteOrder.LITTLE_ENDIAN);
 						file.write(output);
+						if (output.hasRemaining())
+							System.err.println("Length wasn't equal to write");
 						output.position(0);
-						Utils.write(new File(Base.BASE_OUT + "/Data/Models", f.getName()), output);
+						Utils.write(new File(base_input, "/Data/Models/"+ f.getName()), output);
+
+						TMD_File fs = new TMD_File("TEST",
+								Utils.read(new File(base_input, "/Data/Models/" + f.getName())));
 					} catch (Exception e) {
 						System.err.println("Err " + f);
 						e.printStackTrace();
