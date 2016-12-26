@@ -76,45 +76,4 @@ public class TKL_File extends TMD_IO {
 		dataSize += rotations.length * 4 * 4;
 		return dataSize + unk1.length + 4;
 	}
-
-	private static final Map<String, TKL_File> tkl = new HashMap<>();
-
-	public static TKL_File tkl(String name) {
-		if (tkl.containsKey(name))
-			return tkl.get(name);
-		byte[] buffer = new byte[1024];
-		for (int i = Base.BASE_IN.length - 1; i >= 0; i--) {
-			File f = new File(Base.BASE_IN[i], "Data/Models/" + name);
-			if (!f.exists())
-				continue;
-			try {
-				ByteArrayOutputStream bos = new ByteArrayOutputStream();
-				FileInputStream fin = new FileInputStream(f);
-				while (true) {
-					int s = fin.read(buffer);
-					if (s > 0)
-						bos.write(buffer, 0, s);
-					else
-						break;
-				}
-				fin.close();
-				bos.close();
-				ByteBuffer data = ByteBuffer.wrap(bos.toByteArray()).order(ByteOrder.LITTLE_ENDIAN);
-				TKL_File file = new TKL_File(data);
-				// System.out.println("Loaded TKL file " + name + " (" +
-				// file.positions.length + " positions, "
-				// + file.rotations.length + " rotations)");
-				tkl.put(name, file);
-				return file;
-			} catch (Exception e) {
-			}
-		}
-		return null;
-	}
-
-	public static void main(String[] args) throws IOException, InterruptedException {
-		TKL_File flora = tkl("flora.tkl");
-		System.out.println(Arrays.toString(flora.positions));
-		System.out.println(Arrays.toString(flora.rotations));
-	}
 }

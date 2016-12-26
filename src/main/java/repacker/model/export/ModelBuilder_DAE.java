@@ -28,7 +28,10 @@ import repacker.model.scene.TMD_Node;
 
 public class ModelBuilder_DAE {
 	public static void write(String id, TMD_File file) throws IOException {
-		File out = new File(Base.BASE_OUT, "Data/Models/" + id + ".dae");
+		write(new File(Base.BASE_OUT, "Data/Models/" + id + ".dae"), file);
+	}
+
+	public static void write(File out, TMD_File file) throws IOException {
 		new ModelBuilder_DAE(out, file);
 	}
 
@@ -265,8 +268,7 @@ public class ModelBuilder_DAE {
 						for (Entry<String, Float> e : v.weights.entrySet()) {
 							if (s.length() > 0)
 								s.append(' ');
-							s.append(m.nodeToName.get(e.getKey())).append(' ')
-									.append(weights.get(e.getValue()));
+							s.append(m.nodeToName.get(e.getKey())).append(' ').append(weights.get(e.getValue()));
 						}
 					ww.print(s.toString());
 					ww.println("</v>");
@@ -371,18 +373,18 @@ public class ModelBuilder_DAE {
 		}
 		for (TMD_Node child : n.childRef)
 			writeNode(child);
-//		{
-//			ww.println("<extra>");
-//			ww.println("<technique profile=\"blender\">");
-//			ww.println("<layer>0</layer>");
-//			ww.println("<roll>0</roll>");
-//			ww.println("<connect>true</connect>");
-//			ww.println("<tip_x>0</tip_x>");
-//			ww.println("<tip_y>0.5</tip_y>");
-//			ww.println("<tip_z>0</tip_z>");
-//			ww.println("</technique>");
-//			ww.println("</extra>");
-//		}
+		// {
+		// ww.println("<extra>");
+		// ww.println("<technique profile=\"blender\">");
+		// ww.println("<layer>0</layer>");
+		// ww.println("<roll>0</roll>");
+		// ww.println("<connect>true</connect>");
+		// ww.println("<tip_x>0</tip_x>");
+		// ww.println("<tip_y>0.5</tip_y>");
+		// ww.println("<tip_z>0</tip_z>");
+		// ww.println("</technique>");
+		// ww.println("</extra>");
+		// }
 		ww.println("</node>");
 	}
 

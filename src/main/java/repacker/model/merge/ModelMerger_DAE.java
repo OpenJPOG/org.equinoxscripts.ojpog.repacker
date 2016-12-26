@@ -37,6 +37,9 @@ public class ModelMerger_DAE {
 		for (int i = 0; i < this.scene.getNumMeshes(); i++) {
 			FullMesh fm = new FullMesh(this.scene, this.scene.getMeshes().get(i)).clean();
 			TMD_Mesh old = dest.members[i];
+			if (old.pieces.length > 1)
+				throw new UnsupportedOperationException("This basis file, " + basis.source
+						+ ", was divided due to its complexity.  This program doesn't support exporting to this format yet.");
 			dest.members[i] = fm.export(basis);
 			System.out.println("Migrated mesh " + i + " Old[v=" + old.verts.length + ", t=" + old.totalTriStripLength
 					+ "] New[v=" + dest.members[i].verts.length + ", t=" + dest.members[i].totalTriStripLength + "]");
@@ -53,10 +56,10 @@ public class ModelMerger_DAE {
 		if (match != null) {
 			Vector3 tra = world.getTranslation(new Vector3());
 			match.worldSkinningMatrix.setTranslation(tra);
-			System.out.println(match.node_name);
-			System.out.println(match.worldPosition_Inv);
+//			System.out.println(match.node_name);
+//			System.out.println(match.worldPosition_Inv);
 			match.worldSkinningMatrix_Inv.set(match.worldSkinningMatrix).inv();
-			System.out.println(match.worldPosition_Inv);
+//			System.out.println(match.worldPosition_Inv);
 		}
 		// System.out.println(scene);
 	}

@@ -74,8 +74,7 @@ public class ModelExtractor {
 						continue;
 					}
 					try {
-						ByteBuffer data = Utils.read(f);
-						TMD_File file = new TMD_File(f.getName().substring(0, f.getName().length() - 4), data);
+						TMD_File file = new TMD_File(f);
 						if (FIND_CATS.length > 0 && !Arrays.stream(FIND_CATS)
 								.filter(s -> file.header.category.equalsIgnoreCase(s)).findAny().isPresent())
 							continue;

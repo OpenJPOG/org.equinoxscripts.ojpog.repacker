@@ -9,7 +9,6 @@ import java.util.stream.Stream;
 
 import repacker.model.TMD_File;
 import repacker.model.merge.ModelMerger_DAE;
-import repacker.model.mesh.TMD_Mesh;
 
 public class ModelRewriter {
 	static {
@@ -25,8 +24,7 @@ public class ModelRewriter {
 						&& (find.length == 0 || findS.map(s -> f.getName().toLowerCase().contains(s.toLowerCase()))
 								.filter(s -> s).findAny().isPresent())) {
 					try {
-						ByteBuffer data = Utils.read(f);
-						TMD_File file = new TMD_File(f.getName().substring(0, f.getName().length() - 4), data);
+						TMD_File file = new TMD_File(f);
 						File dae = new File(Base.BASE_OUT + "/Data/Models", file.source + "_mod.dae");
 						ModelMerger_DAE merge = new ModelMerger_DAE(file, dae);
 						merge.apply();
@@ -38,8 +36,7 @@ public class ModelRewriter {
 						output.position(0);
 						Utils.write(new File(base_input, "/Data/Models/" + f.getName()), output);
 
-						TMD_File fs = new TMD_File("TEST",
-								Utils.read(new File(base_input, "/Data/Models/" + f.getName())));
+						TMD_File fs = new TMD_File(new File(base_input, "/Data/Models/" + f.getName()));
 					} catch (Exception e) {
 						System.err.println("Err " + f);
 						e.printStackTrace();
