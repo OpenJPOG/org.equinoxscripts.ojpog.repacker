@@ -41,10 +41,26 @@ public class TMD_Mesh_Piece extends TMD_IO {
 		this.vertsRequired = this.verts.length;
 	}
 
-	public void computeBB() {
+	public TMD_Mesh_Piece(TMD_File file, int requiredVerts, short[] tris, int[] meshParents) {
+		super(file);
+		this.meshParents = meshParents;
+		this.meshParentsRef = new TMD_Node[this.meshParents.length];
+
+		this.boundingCenter = new Vector3();
+		this.boundingExtents = new Vector3();
+
+		this.loadedData = true;
+		this.vertex = this.index = null;
+
+		this.verts = new TMD_Vertex[0];
+		this.tri_strip = tris;
+		this.vertsRequired = requiredVerts;
+	}
+
+	public void computeBB(TMD_Vertex[] vtable) {
 		BoundingBox bb = new BoundingBox().inf();
-		for (TMD_Vertex v : verts)
-			bb.ext(v.position);
+		for (short i : this.tri_strip)
+			bb.ext(vtable[i].position);
 		bb.getCenter(this.boundingCenter);
 		bb.getDimensions(this.boundingExtents).scl(0.5f);
 	}

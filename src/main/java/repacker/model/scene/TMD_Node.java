@@ -67,12 +67,28 @@ public class TMD_Node extends TMD_IO {
 	}
 
 	public final int id;
+	/**
+	 * Utility
+	 */
 	public final Matrix4 worldPosition, worldPosition_Inv;
 
+	/**
+	 * Utility
+	 */
 	public final Matrix4 localPosition, localPosition_Inv;
 
+	/**
+	 * Written to file
+	 */
 	public final Matrix4 worldSkinningMatrix, worldSkinningMatrix_Inv;
+	
+	/**
+	 * Utility
+	 */
 	public final Matrix4 localSkinningMatrix, localSkinningMatrix_Inv;
+	/**
+	 * Written to file
+	 */
 	public final Matrix4 matrix2;
 
 	public final String node_name;

@@ -371,6 +371,18 @@ public class ModelBuilder_DAE {
 		}
 		for (TMD_Node child : n.childRef)
 			writeNode(child);
+//		{
+//			ww.println("<extra>");
+//			ww.println("<technique profile=\"blender\">");
+//			ww.println("<layer>0</layer>");
+//			ww.println("<roll>0</roll>");
+//			ww.println("<connect>true</connect>");
+//			ww.println("<tip_x>0</tip_x>");
+//			ww.println("<tip_y>0.5</tip_y>");
+//			ww.println("<tip_z>0</tip_z>");
+//			ww.println("</technique>");
+//			ww.println("</extra>");
+//		}
 		ww.println("</node>");
 	}
 

@@ -105,7 +105,7 @@ public class FullMesh {
 		this.verts = vts.toArray(new FullMesh.FullMeshVertex[vts.size()]);
 
 		int th = 0;
-		int[] tris = new int[mesh.totalTris * 3];
+		int[] tris = new int[mesh.totalTriStripLength * 3];
 		for (TMD_Mesh_Piece p : mesh.pieces) {
 			int j = 0;
 			tris: for (int i = 2; i < p.tri_strip.length; i++) {
@@ -148,7 +148,6 @@ public class FullMesh {
 		this.tris = Arrays.copyOf(tris, th);
 	}
 
-	
 	public FullMesh(AiScene scene, AiMesh mesh) {
 		this.mid = mesh.getName().trim().isEmpty() ? "geom_" + mesh.hashCode() : mesh.getName();
 		this.verts = new FullMeshVertex[mesh.getNumVertices()];
@@ -227,7 +226,7 @@ public class FullMesh {
 	}
 
 	public int[] triStrip() {
-		return new TriStripper(this.tris).generate();
+		return new TriStripper_NV(this.tris).generate();
 	}
 
 	public TMD_Node[] nodes(TMD_File f) {
@@ -236,6 +235,8 @@ public class FullMesh {
 			map[i] = f.nodes.byName(nodes[i]);
 		return map;
 	}
+
+	public static final int TRI_STRIP_CAP = 7500;
 
 	public TMD_Mesh export(TMD_File file) {
 		if (verts.length >= Short.MAX_VALUE)
@@ -247,18 +248,33 @@ public class FullMesh {
 			meshParents[i] = bones[i].id;
 		TMD_Vertex[] vt = new TMD_Vertex[this.verts.length];
 		int[] tii = triStrip();
-		short[] tiis = new short[tii.length];
-		for (int i = 0; i < tii.length; i++)
-			tiis[i] = (short) tii[i];
-		TMD_Mesh_Piece piece = new TMD_Mesh_Piece(file, vt, tiis, meshParents);
-
+		int pieceCount = (int) Math.ceil(tii.length / (double) TRI_STRIP_CAP);
+		short[][] tiis = new short[pieceCount][TRI_STRIP_CAP + 50];
+		TMD_Mesh_Piece[] pieces = new TMD_Mesh_Piece[pieceCount];
+		System.out.println("Dividing into " + pieceCount + " pieces");
+		for (int pi = 0; pi < pieceCount; pi++) {
+			int toffset = pi * TRI_STRIP_CAP;
+			int stripHead = 0;
+			if (toffset > 0) {
+				tiis[pi][stripHead++] = (short) tii[toffset - 2];
+				tiis[pi][stripHead++] = (short) tii[toffset - 1];
+			}
+			for (int i = 0; i < Math.min(tii.length - toffset, TRI_STRIP_CAP); i++)
+				tiis[pi][stripHead++] = (short) tii[toffset + i];
+			System.out.println("Piece " + pi + " has " + stripHead + " tristrip");
+			if (pi == 0)
+				pieces[pi] = new TMD_Mesh_Piece(file, vt, Arrays.copyOf(tiis[pi], stripHead), meshParents);
+			else
+				pieces[pi] = new TMD_Mesh_Piece(file, vt.length, Arrays.copyOf(tiis[pi], stripHead), meshParents);
+		}
 		for (int i = 0; i < this.verts.length; i++) {
 			Map<Integer, Float> nmap = new HashMap<>();
 			for (Entry<String, Float> bind : this.verts[i].weights.entrySet())
 				nmap.put(nodeToName.get(bind.getKey()), bind.getValue());
-			vt[i] = new TMD_Vertex(piece, this.verts[i].pos, this.verts[i].nrm, this.verts[i].tex, nmap);
+			vt[i] = new TMD_Vertex(pieces[0], this.verts[i].pos, this.verts[i].nrm, this.verts[i].tex, nmap);
 		}
-		piece.computeBB();
-		return new TMD_Mesh(file, materialName, new TMD_Mesh_Piece[] { piece });
+		for (TMD_Mesh_Piece p : pieces)
+			p.computeBB(pieces[0].verts);
+		return new TMD_Mesh(file, materialName, pieces);
 	}
 }

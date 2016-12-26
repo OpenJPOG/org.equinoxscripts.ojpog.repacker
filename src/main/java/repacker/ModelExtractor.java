@@ -80,13 +80,7 @@ public class ModelExtractor {
 								.filter(s -> file.header.category.equalsIgnoreCase(s)).findAny().isPresent())
 							continue;
 
-						// if (data.hasRemaining())
-						// System.out.println("Read: " + f + ", leftover " +
-						// data.remaining());
-						 ModelBuilder_DAE.write(f.getName().substring(0,
-						 f.getName().length() - 4), file);
-						// ModelBuilder_G3DJ.write(f.getName().substring(0,
-						// f.getName().length() - 4), file);
+						ModelBuilder_DAE.write(f.getName().substring(0, f.getName().length() - 4), file);
 					} catch (Exception e) {
 						System.err.println("Err reading " + f);
 						e.printStackTrace();

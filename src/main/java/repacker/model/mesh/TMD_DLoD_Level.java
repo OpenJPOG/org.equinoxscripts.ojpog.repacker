@@ -18,7 +18,11 @@ public class TMD_DLoD_Level extends TMD_IO {
 	public TMD_DLoD_Level(TMD_File file, ByteBuffer b) throws UnsupportedEncodingException {
 		super(file);
 		this.members = new TMD_Mesh[b.getInt()];
+		// zero for everything except VentP90*
+		// might be a float?
 		this.unk1 = b.getInt();
+		if (this.unk1 != 0)
+			System.out.println(file.source + "\t" + Integer.toHexString(this.unk1) + "\t" + Float.intBitsToFloat(unk1));
 		floats(b, unk2);
 		for (int i = 0; i < members.length; i++)
 			members[i] = new TMD_Mesh(this, b);
@@ -45,7 +49,7 @@ public class TMD_DLoD_Level extends TMD_IO {
 	public int totalTris() {
 		int i = 0;
 		for (TMD_Mesh m : members)
-			i += m.totalTris;
+			i += m.totalTriStripLength;
 		return i;
 	}
 

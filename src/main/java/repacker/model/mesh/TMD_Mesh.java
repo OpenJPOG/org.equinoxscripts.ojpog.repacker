@@ -14,7 +14,7 @@ public class TMD_Mesh extends TMD_IO {
 
 	public final TMD_Mesh_Piece[] pieces;
 
-	public final int totalTris;
+	public final int totalTriStripLength;
 
 	public final TMD_Vertex[] verts;
 
@@ -25,17 +25,17 @@ public class TMD_Mesh extends TMD_IO {
 		int ttl = 0;
 		int ttv = 0;
 		for (TMD_Mesh_Piece p : pieces) {
-			ttl += p.tri_strip.length - 2;
+			ttl += p.tri_strip.length;
 			ttv += p.verts.length;
 		}
-		this.totalTris = ttl;
+		this.totalTriStripLength = ttl;
 		this.verts = new TMD_Vertex[ttv];
 	}
 
 	public TMD_Mesh(TMD_DLoD_Level file, ByteBuffer b) throws UnsupportedEncodingException {
 		super(file.file);
 		int pieceCount = b.getInt();
-		totalTris = b.getInt();
+		totalTriStripLength = b.getInt();
 		int totalVerts = b.getInt();
 
 		material_name = read(b, 32);
@@ -53,7 +53,7 @@ public class TMD_Mesh extends TMD_IO {
 	@Override
 	public void write(ByteBuffer b) {
 		b.putInt(pieces.length);
-		b.putInt(totalTris);
+		b.putInt(totalTriStripLength);
 		b.putInt(verts.length);
 		write(b, 32, material_name);
 		for (TMD_Mesh_Piece p : pieces)
@@ -70,7 +70,7 @@ public class TMD_Mesh extends TMD_IO {
 
 	@Override
 	public String toString() {
-		return "MS[" + material_name + " t=" + totalTris + " v=" + (verts == null ? "null" : "" + verts.length) + "]";
+		return "MS[" + material_name + " t=" + totalTriStripLength + " v=" + (verts == null ? "null" : "" + verts.length) + "]";
 	}
 
 	public void loadVtxAndTri() {
@@ -103,9 +103,9 @@ public class TMD_Mesh extends TMD_IO {
 			for (short s : p.tri_strip)
 				verts[s].usedBy(p);
 		}
-		for (int i = 0; i<verts.length; i++)
+		for (int i = 0; i < verts.length; i++)
 			if (verts[i].user == null)
-				System.out.println("No user "  + i);
+				System.out.println("No user " + i);
 
 		// Integrity check thing. Not needed in production.
 		Set<TMD_Vertex> check = new HashSet<>();

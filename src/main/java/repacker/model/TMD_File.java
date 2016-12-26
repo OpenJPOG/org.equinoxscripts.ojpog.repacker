@@ -22,7 +22,7 @@ public class TMD_File extends TMD_IO {
 		this.source = k;
 		this.file = this;
 		this.header = new TMD_Header_Block(this, data);
-//		System.out.println(source + "\n" + header);
+		// System.out.println(source + "\n" + header);
 		int nodeStart = data.position();
 		this.nodes = new TMD_Node_Block(this, data);
 		int animStart = data.position();
@@ -32,13 +32,16 @@ public class TMD_File extends TMD_IO {
 		int eofStart = data.position();
 		this.link();
 
-//		System.out.println("\tNodes:\t" + nodeStart);
-//		System.out.println("\tAnims:\t" + animStart + "\t" + (animStart - nodeStart));
-//		System.out.println("\tMeshs:\t" + meshStart + "\t" + (meshStart - animStart) + "\t" + (meshStart - nodeStart));
-//		System.out.println("\tEOF:\t" + eofStart + "\t" + (eofStart - meshStart) + "\t" + (eofStart - animStart) + "\t"
-//				+ (eofStart - nodeStart));
-//		System.out.println("\tEnd:\t" + data.capacity());
-//		System.out.println();
+		// System.out.println("\tNodes:\t" + nodeStart);
+		// System.out.println("\tAnims:\t" + animStart + "\t" + (animStart -
+		// nodeStart));
+		// System.out.println("\tMeshs:\t" + meshStart + "\t" + (meshStart -
+		// animStart) + "\t" + (meshStart - nodeStart));
+		// System.out.println("\tEOF:\t" + eofStart + "\t" + (eofStart -
+		// meshStart) + "\t" + (eofStart - animStart) + "\t"
+		// + (eofStart - nodeStart));
+		// System.out.println("\tEnd:\t" + data.capacity());
+		// System.out.println();
 	}
 
 	@Override
@@ -49,7 +52,7 @@ public class TMD_File extends TMD_IO {
 		size = Math.max(size, header.meshBlockOffset() + dLoD.length());
 		return size;
 	}
-	
+
 	@Override
 	public void write(ByteBuffer data) throws IOException {
 		header.write(data);
@@ -60,7 +63,7 @@ public class TMD_File extends TMD_IO {
 		data.position(header.meshBlockOffset());
 		dLoD.write(data);
 	}
-	
+
 	public void updateIntegrity() throws IOException {
 		header.fileLength = length() - 12;
 	}

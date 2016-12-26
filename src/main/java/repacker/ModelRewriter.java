@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 
 import repacker.model.TMD_File;
 import repacker.model.merge.ModelMerger_DAE;
+import repacker.model.mesh.TMD_Mesh;
 
 public class ModelRewriter {
 	static {
@@ -29,14 +30,13 @@ public class ModelRewriter {
 						File dae = new File(Base.BASE_OUT + "/Data/Models", file.source + "_mod.dae");
 						ModelMerger_DAE merge = new ModelMerger_DAE(file, dae);
 						merge.apply();
-
 						file.updateIntegrity();
 						ByteBuffer output = ByteBuffer.allocate(file.length()).order(ByteOrder.LITTLE_ENDIAN);
 						file.write(output);
 						if (output.hasRemaining())
 							System.err.println("Length wasn't equal to write");
 						output.position(0);
-						Utils.write(new File(base_input, "/Data/Models/"+ f.getName()), output);
+						Utils.write(new File(base_input, "/Data/Models/" + f.getName()), output);
 
 						TMD_File fs = new TMD_File("TEST",
 								Utils.read(new File(base_input, "/Data/Models/" + f.getName())));
