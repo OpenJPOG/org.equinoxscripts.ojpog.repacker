@@ -20,6 +20,7 @@ import repacker.model.merge.ModelMerger_DAE;
 
 public class SimpleGUI {
 	static {
+		
 		System.loadLibrary("64".equals(System.getProperty("sun.arch.data.model")) ? "gdx64" : "gdx");
 	}
 
@@ -67,7 +68,7 @@ public class SimpleGUI {
 							PrintWriter pw = new PrintWriter(sw);
 							t.printStackTrace(pw);
 							JOptionPane.showMessageDialog(null,
-									"<html>Failed: </br>" + sw.toString().replace("\n", "</br>") + "</html>");
+									"<html>Failed: <br>" + sw.toString().replace("\n", "<br>") + "</html>");
 						}
 					}
 				}
@@ -113,7 +114,7 @@ public class SimpleGUI {
 								PrintWriter pw = new PrintWriter(sw);
 								t.printStackTrace(pw);
 								JOptionPane.showMessageDialog(null,
-										"<html>Failed: </br>" + sw.toString().replace("\n", "</br>") + "</html>");
+										"<html>Failed: <br>" + sw.toString().replace("\n", "<br>") + "</html>");
 							}
 						}
 					}
