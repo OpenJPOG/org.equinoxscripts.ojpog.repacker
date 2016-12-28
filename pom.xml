@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.equinoxscripts.ojpog</groupId>
 	<artifactId>repacker</artifactId>
-	<version>0.0.2-SNAPSHOT</version>
+	<version>0.0.3</version>
 
 	<dependencies>
 		<dependency>
@@ -28,11 +28,15 @@
 			<version>14.0.1</version>
 		</dependency>
 		<dependency>
-			<groupId>org.equinoxscripts</groupId>
-			<artifactId>jassimp-port</artifactId>
-			<version>1.0.0</version>
-			<scope>system</scope>
-			<systemPath>${project.basedir}/jassimp/dist/jassimp.jar</systemPath>
+			<groupId>org.equinoxscripts.jassimp</groupId>
+			<artifactId>jassimp</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.equinoxscripts.jassimp</groupId>
+			<artifactId>jassimp-platform</artifactId>
+			<classifier>natives-desktop</classifier>
+			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 	<build>
@@ -57,8 +61,8 @@
 				<version>0.0.6</version>
 				<executions>
 					<execution>
+						<phase>prepare-package</phase>
 						<id>unpacknatives</id>
-						<phase>install</phase>
 						<goals>
 							<goal>copy</goal>
 						</goals>
@@ -77,6 +81,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
+				<version>3.0.2</version>
 				<configuration>
 					<archive>
 						<manifest>
@@ -84,8 +89,33 @@
 							<mainClass>repacker.SimpleGUI</mainClass>
 							<classpathPrefix>lib/</classpathPrefix>
 						</manifest>
-				  	</archive>
+					</archive>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>com.jolira</groupId>
+				<artifactId>onejar-maven-plugin</artifactId>
+				<version>1.4.4</version>
+				<executions>
+					<execution>
+						<configuration>
+							<onejarVersion>0.97</onejarVersion>
+							<binlibs>
+								<fileSet>
+									<directory>${project.build.directory}/natives/</directory>
+									<includes>
+										<include>*</include>
+									</includes>
+								</fileSet>
+							</binlibs>
+							<attachToBuild>true</attachToBuild>
+							<classifier>onejar</classifier>
+						</configuration>
+						<goals>
+							<goal>one-jar</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
