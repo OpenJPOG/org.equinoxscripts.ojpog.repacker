@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.equinoxscripts.ojpog</groupId>
 	<artifactId>repacker</artifactId>
-	<version>0.0.3</version>
+	<version>0.0.4</version>
 
 	<dependencies>
 		<dependency>
@@ -45,7 +45,7 @@
 				<artifactId>maven-dependency-plugin</artifactId>
 					<executions>
 					<execution>
-						<phase>install</phase>
+						<phase>prepare-package</phase>
 						<goals>
 							<goal>copy-dependencies</goal>
 						</goals>
@@ -93,26 +93,17 @@
 				</configuration>
 			</plugin>
 			<plugin>
-				<groupId>com.jolira</groupId>
-				<artifactId>onejar-maven-plugin</artifactId>
-				<version>1.4.4</version>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>2.5.3</version>
+				<configuration>
+					<descriptor>src/assembly/dep.xml</descriptor>
+				</configuration>
 				<executions>
 					<execution>
-						<configuration>
-							<onejarVersion>0.97</onejarVersion>
-							<binlibs>
-								<fileSet>
-									<directory>${project.build.directory}/natives/</directory>
-									<includes>
-										<include>*</include>
-									</includes>
-								</fileSet>
-							</binlibs>
-							<attachToBuild>true</attachToBuild>
-							<classifier>onejar</classifier>
-						</configuration>
+						<id>create-archive</id>
+						<phase>package</phase>
 						<goals>
-							<goal>one-jar</goal>
+							<goal>single</goal>
 						</goals>
 					</execution>
 				</executions>

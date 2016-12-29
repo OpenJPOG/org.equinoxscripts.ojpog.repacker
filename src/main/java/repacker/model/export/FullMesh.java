@@ -75,11 +75,12 @@ public class FullMesh {
 
 		for (TMD_Mesh_Piece p : mesh.pieces)
 			for (TMD_Node n : p.meshParentsRef)
-				if (!nodeToName.containsKey(n))
+				if (!nodeToName.containsKey(n.node_name))
 					nodeToName.put(n.node_name, nodeToName.size());
 		this.nodes = new String[nodeToName.size()];
 		for (Entry<String, Integer> e : nodeToName.entrySet())
 			this.nodes[e.getValue()] = e.getKey();
+		
 		this.materialName = mesh.material_name;
 		short[] remap = new short[mesh.verts.length];
 		Arrays.fill(remap, (short) -1);

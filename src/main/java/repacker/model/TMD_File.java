@@ -5,9 +5,11 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import repacker.Utils;
+import repacker.model.anim.TMD_Animation;
 import repacker.model.anim.TMD_Animation_Block;
 import repacker.model.ext.TKL_File;
 import repacker.model.mesh.TMD_DLoD_Block;
+import repacker.model.mesh.TMD_Mesh;
 import repacker.model.scene.TMD_Node_Block;
 
 public class TMD_File extends TMD_IO {
@@ -59,6 +61,19 @@ public class TMD_File extends TMD_IO {
 		animations.write(data);
 		data.position(header.meshBlockOffset());
 		dLoD.write(data);
+	}
+
+	public String summary() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("Nodes: ").append("\n-").append(this.nodes.sceneGraph(a -> "").replace("\n", "\n-")).append("\n");
+		sb.append("Animations:").append("\n");
+		for (TMD_Animation a : animations.animations)
+			sb.append("-" + a.name + ": " + a.length + " sec").append("\n");
+		sb.append("Meshes:").append("\n");
+		for (TMD_Mesh m : dLoD.levels[0].members)
+			sb.append("-Mesh mat=" + m.material_name + ", v=" + m.verts + ", t=" + m.totalTriStripLength + ", pieces="
+					+ m.pieces).append("\n");
+		return sb.toString();
 	}
 
 	public void updateIntegrity() throws IOException {

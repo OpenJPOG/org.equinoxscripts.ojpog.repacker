@@ -9,9 +9,11 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import repacker.model.TMD_File;
@@ -20,7 +22,7 @@ import repacker.model.merge.ModelMerger_DAE;
 
 public class SimpleGUI {
 	static {
-		
+
 		System.loadLibrary("64".equals(System.getProperty("sun.arch.data.model")) ? "gdx64" : "gdx");
 	}
 
@@ -30,6 +32,16 @@ public class SimpleGUI {
 			"dae");
 
 	static File tmdFileInNorm = null, daeFileNorm = null, tmdFileOutNorm = null;
+
+	private static void alert(String s) {
+		JDialog jd = new JDialog();
+		jd.setTitle("Alert");
+		JTextPane pane = new JTextPane();
+		pane.setText(s);
+		jd.setSize(500, 500);
+		jd.add(new JScrollPane(pane));
+		jd.setVisible(true);
+	}
 
 	public static void main(String[] args) {
 
@@ -62,13 +74,12 @@ public class SimpleGUI {
 							TMD_File tmd = new TMD_File(tmdFile);
 
 							ModelBuilder_DAE.write(outFile, tmd);
-							JOptionPane.showMessageDialog(null, "Saved to " + outFile.getAbsolutePath());
+							alert("Saved to " + outFile.getAbsolutePath() + "\n" + tmd.summary());
 						} catch (Throwable t) {
 							StringWriter sw = new StringWriter();
 							PrintWriter pw = new PrintWriter(sw);
 							t.printStackTrace(pw);
-							JOptionPane.showMessageDialog(null,
-									"<html>Failed: <br>" + sw.toString().replace("\n", "<br>") + "</html>");
+							alert("Failed:\n" + sw.toString());
 						}
 					}
 				}
@@ -108,13 +119,12 @@ public class SimpleGUI {
 									throw new IOException("Length wasn't equal to write");
 								output.position(0);
 								Utils.write(outFile, output);
-								JOptionPane.showMessageDialog(null, "Saved to " + outFile.getAbsolutePath());
+								alert("Saved to " + outFile.getAbsolutePath());
 							} catch (Throwable t) {
 								StringWriter sw = new StringWriter();
 								PrintWriter pw = new PrintWriter(sw);
 								t.printStackTrace(pw);
-								JOptionPane.showMessageDialog(null,
-										"<html>Failed: <br>" + sw.toString().replace("\n", "<br>") + "</html>");
+								alert(sw.toString());
 							}
 						}
 					}

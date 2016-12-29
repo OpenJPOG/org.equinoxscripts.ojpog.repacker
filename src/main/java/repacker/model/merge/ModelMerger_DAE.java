@@ -39,7 +39,7 @@ public class ModelMerger_DAE {
 			TMD_Mesh old = dest.members[i];
 			if (old.pieces.length > 1)
 				throw new UnsupportedOperationException("This basis file, " + basis.source
-						+ ", was divided due to its complexity.  This program doesn't support exporting to this format yet.");
+						+ ", was divided due to its skeletal complexity.  This program doesn't support exporting to this format yet.");
 			dest.members[i] = fm.export(basis);
 			System.out.println("Migrated mesh " + i + " Old[v=" + old.verts.length + ", t=" + old.totalTriStripLength
 					+ "] New[v=" + dest.members[i].verts.length + ", t=" + dest.members[i].totalTriStripLength + "]");
