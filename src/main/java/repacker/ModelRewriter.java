@@ -18,13 +18,14 @@ public class ModelRewriter {
 	public static void main(String[] args) throws IOException, InterruptedException {
 		for (File base_input : Base.BASE_IN) {
 			for (File f : new File(base_input, "Data/Models/backup").listFiles()) {
-				String[] find = { "Anky.tmd" };
+				String[] find = { "Galli.tmd" };
 				Stream<String> findS = Arrays.stream(find);
 				if (f.getName().endsWith(".tmd")
 						&& (find.length == 0 || findS.map(s -> f.getName().toLowerCase().contains(s.toLowerCase()))
 								.filter(s -> s).findAny().isPresent())) {
 					try {
 						TMD_File file = new TMD_File(f);
+						System.out.println("Galli is " + file.header.category);
 						File dae = new File(Base.BASE_OUT + "/Data/Models", file.source + "_mod.dae");
 						ModelMerger_DAE merge = new ModelMerger_DAE(file, dae);
 						merge.apply();

@@ -276,6 +276,6 @@ public class FullMesh {
 		}
 		for (TMD_Mesh_Piece p : pieces)
 			p.computeBB(pieces[0].verts);
-		return new TMD_Mesh(file, materialName, pieces);
+		return new TMD_Mesh(file,"Galli"/* materialName*/, pieces);
 	}
 }

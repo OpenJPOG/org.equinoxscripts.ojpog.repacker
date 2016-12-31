@@ -64,7 +64,7 @@ public class ModelExtractor {
 	public static void main(String[] args) throws IOException, InterruptedException {
 		for (File base_input : Base.BASE_IN) {
 			for (File f : new File(base_input, "Data/Models/backup").listFiles()) {
-				String[] find = { "Allo.tmd" };
+				String[] find = { };
 				Stream<String> findS = Arrays.stream(find);
 				if (f.getName().endsWith(".tmd") && (find.length == 0 || findS
 						.filter(s -> f.getName().toLowerCase().contains(s.toLowerCase())).findAny().isPresent())) {

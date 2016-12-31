@@ -1,4 +1,4 @@
-package repacker.texture;
+package repacker.texture.util;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
