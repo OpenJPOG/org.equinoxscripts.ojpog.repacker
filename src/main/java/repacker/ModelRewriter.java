@@ -27,7 +27,7 @@ public class ModelRewriter {
 						TMD_File file = new TMD_File(f);
 						System.out.println("Galli is " + file.header.category);
 						File dae = new File(Base.BASE_OUT + "/Data/Models", file.source + "_mod.dae");
-						ModelMerger_DAE merge = new ModelMerger_DAE(file, dae);
+						ModelMerger_DAE merge = new ModelMerger_DAE(file, ModelMerger_DAE.loadScene(dae));
 						merge.apply();
 						file.updateIntegrity();
 						ByteBuffer output = ByteBuffer.allocate(file.length()).order(ByteOrder.LITTLE_ENDIAN);

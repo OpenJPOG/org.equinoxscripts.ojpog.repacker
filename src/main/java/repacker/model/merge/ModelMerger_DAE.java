@@ -26,8 +26,12 @@ public class ModelMerger_DAE {
 	private final AiScene scene;
 	private final TMD_File basis;
 
-	public ModelMerger_DAE(TMD_File basis, File dae) throws IOException {
-		this.scene = Jassimp.importFile(dae.getAbsolutePath(), EnumSet.of(AiPostProcessSteps.TRIANGULATE));
+	public static AiScene loadScene(File dae) throws IOException {
+		return Jassimp.importFile(dae.getAbsolutePath(), EnumSet.of(AiPostProcessSteps.TRIANGULATE));
+	}
+
+	public ModelMerger_DAE(TMD_File basis, AiScene scene) throws IOException {
+		this.scene = scene;
 		this.basis = basis;
 	}
 
@@ -56,10 +60,10 @@ public class ModelMerger_DAE {
 		if (match != null) {
 			Vector3 tra = world.getTranslation(new Vector3());
 			match.worldSkinningMatrix.setTranslation(tra);
-//			System.out.println(match.node_name);
-//			System.out.println(match.worldPosition_Inv);
+			// System.out.println(match.node_name);
+			// System.out.println(match.worldPosition_Inv);
 			match.worldSkinningMatrix_Inv.set(match.worldSkinningMatrix).inv();
-//			System.out.println(match.worldPosition_Inv);
+			// System.out.println(match.worldPosition_Inv);
 		}
 		// System.out.println(scene);
 	}

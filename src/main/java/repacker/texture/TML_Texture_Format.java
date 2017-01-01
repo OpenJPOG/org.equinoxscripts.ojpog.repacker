@@ -1,12 +1,14 @@
 package repacker.texture;
 
 public enum TML_Texture_Format {
-	RGBA_8888(0), RGBA_5551(2), RAW_DDS(6), RGBA_4444(7);
+	RGBA_8888(0, "RGBA_8888"), ARGB_1555(2, "ARGB_1555"), RAW_DDS(6, "DDS"), ARGB_4444(7, "ARGB_4444");
 
+	public final String properName;
 	public final short id;
 
-	private TML_Texture_Format(int id) {
+	private TML_Texture_Format(int id, String properName) {
 		this.id = (short) id;
+		this.properName = properName;
 	}
 
 	private static final TML_Texture_Format[] formats;

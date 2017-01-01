@@ -15,23 +15,29 @@ public class TML_File extends Gen_IO {
 	public TML_Texture[] textures;
 	public String[] stringTable;
 
-	public class TML_Ref extends Gen_IO {
+	public class TML_Material extends Gen_IO {
 		public String name;
-		public TML_Texture[] refs;
+		public TML_Texture[] textures;
 		public short unknown;
 
-		public TML_Ref(ByteBuffer b) {
+		public TML_Material(ByteBuffer b) {
 			this.name = stringTable[b.getInt()];
 			this.unknown = b.getShort();
-			this.refs = new TML_Texture[b.getShort()];
-			for (int i = 0; i < refs.length; i++) {
+			this.textures = new TML_Texture[b.getShort()];
+			for (int i = 0; i < textures.length; i++) {
 				int key = b.getInt();
-				for (TML_Texture t : textures)
+				for (TML_Texture t : TML_File.this.textures)
 					if (t.textureID == key) {
-						this.refs[i] = t;
+						this.textures[i] = t;
 						break;
 					}
 			}
+		}
+
+		public TML_Material(String nam) {
+			this.name = nam;
+			this.unknown = 0;
+			this.textures = new TML_Texture[0];
 		}
 
 		public int key() {
@@ -51,19 +57,19 @@ public class TML_File extends Gen_IO {
 				throw new IOException();
 			b.putInt(key);
 			b.putShort(unknown);
-			b.putShort((short) this.refs.length);
-			for (TML_Texture t : refs)
+			b.putShort((short) this.textures.length);
+			for (TML_Texture t : textures)
 				b.putInt(t.textureID);
 		}
 
 		@Override
 		public int length() throws IOException {
-			return 4 + 2 + 2 + 4 * refs.length;
+			return 4 + 2 + 2 + 4 * textures.length;
 		}
 
 	}
 
-	public final Map<String, TML_Ref> stringMapping;
+	public final Map<String, TML_Material> stringMapping;
 
 	public TML_File(ByteBuffer data) throws UnsupportedEncodingException, IOException {
 		data.position(0);
@@ -77,12 +83,8 @@ public class TML_File extends Gen_IO {
 		for (int i = 0; i < stringTable.length; i++)
 			stringTable[i] = read(data, 32);
 		this.stringMapping = new HashMap<>();
-		loadInternal(data);
-	}
-
-	private void loadInternal(ByteBuffer data) {
 		for (int i = 0; i < stringTable.length; i++) {
-			TML_Ref ref = new TML_Ref(data);
+			TML_Material ref = new TML_Material(data);
 			stringMapping.put(ref.name, ref);
 		}
 	}
@@ -98,11 +100,11 @@ public class TML_File extends Gen_IO {
 		for (String s : stringTable)
 			write(b, 32, s);
 		List<Object[]> bas = new ArrayList<>();
-		for (TML_Ref r : stringMapping.values())
+		for (TML_Material r : stringMapping.values())
 			bas.add(new Object[] { r.key(), r });
 		bas.sort((a, bf) -> ((Integer) a[0]).compareTo((Integer) bf[0]));
 		for (Object[] f : bas)
-			((TML_Ref) f[1]).write(b);
+			((TML_Material) f[1]).write(b);
 	}
 
 	@Override
@@ -111,7 +113,7 @@ public class TML_File extends Gen_IO {
 		for (TML_Texture t : this.textures)
 			len += t.length();
 		len += 4 + 32 * stringTable.length;
-		for (TML_Ref r : stringMapping.values())
+		for (TML_Material r : stringMapping.values())
 			len += r.length();
 		return len;
 	}

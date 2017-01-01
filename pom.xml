@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.equinoxscripts.ojpog</groupId>
 	<artifactId>repacker</artifactId>
-	<version>0.0.4</version>
+	<version>0.0.5</version>
 
 	<dependencies>
 		<dependency>
@@ -86,7 +86,7 @@
 					<archive>
 						<manifest>
 							<addClasspath>true</addClasspath>
-							<mainClass>repacker.SimpleGUI</mainClass>
+							<mainClass>repacker.ui.RepackerUI</mainClass>
 							<classpathPrefix>lib/</classpathPrefix>
 						</manifest>
 					</archive>

@@ -110,7 +110,7 @@ public class SimpleGUI {
 
 							try {
 								TMD_File tmd = new TMD_File(tmdFile);
-								ModelMerger_DAE merge = new ModelMerger_DAE(tmd, daeFile);
+								ModelMerger_DAE merge = new ModelMerger_DAE(tmd, ModelMerger_DAE.loadScene(daeFile));
 								merge.apply();
 								tmd.updateIntegrity();
 								ByteBuffer output = ByteBuffer.allocate(tmd.length()).order(ByteOrder.LITTLE_ENDIAN);

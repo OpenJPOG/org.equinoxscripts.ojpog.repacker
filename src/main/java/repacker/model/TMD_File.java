@@ -71,8 +71,8 @@ public class TMD_File extends TMD_IO {
 			sb.append("-" + a.name + ": " + a.length + " sec").append("\n");
 		sb.append("Meshes:").append("\n");
 		for (TMD_Mesh m : dLoD.levels[0].members)
-			sb.append("-Mesh mat=" + m.material_name + ", v=" + m.verts + ", t=" + m.totalTriStripLength + ", pieces="
-					+ m.pieces).append("\n");
+			sb.append("-Mesh mat=" + m.material_name + ", v=" + m.verts.length + ", t=" + m.totalTriStripLength
+					+ ", pieces=" + m.pieces.length).append("\n");
 		return sb.toString();
 	}
 
