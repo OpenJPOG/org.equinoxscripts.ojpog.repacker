@@ -80,7 +80,7 @@ public class FullMesh {
 		this.nodes = new String[nodeToName.size()];
 		for (Entry<String, Integer> e : nodeToName.entrySet())
 			this.nodes[e.getValue()] = e.getKey();
-		
+
 		this.materialName = mesh.material_name;
 		short[] remap = new short[mesh.verts.length];
 		Arrays.fill(remap, (short) -1);
@@ -276,6 +276,6 @@ public class FullMesh {
 		}
 		for (TMD_Mesh_Piece p : pieces)
 			p.computeBB(pieces[0].verts);
-		return new TMD_Mesh(file,"Galli"/* materialName*/, pieces);
+		return new TMD_Mesh(file, materialName, pieces);
 	}
 }
