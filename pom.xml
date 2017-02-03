@@ -97,7 +97,7 @@
 					<archive>
 						<manifest>
 							<addClasspath>true</addClasspath>
-							<mainClass>org.equinoxscripts.ojpog.repacker.RepackerUI</mainClass>
+							<mainClass>org.equinoxscripts.ojpog.repacker.ui.RepackerUI</mainClass>
 							<classpathPrefix>lib/</classpathPrefix>
 						</manifest>
 					</archive>
