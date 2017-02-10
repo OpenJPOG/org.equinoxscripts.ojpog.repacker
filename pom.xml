@@ -2,7 +2,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-        <version>0.1.0</version>
+        <version>0.1.1</version>
 	<groupId>org.equinoxscripts.ojpog</groupId>
 	<artifactId>repacker</artifactId>
 
@@ -10,7 +10,7 @@
 		<dependency>
 			<groupId>org.equinoxscripts.ojpog</groupId>
 			<artifactId>io</artifactId>
-			<version>0.1.0</version>
+			<version>0.1.1</version>
 		</dependency>
 		<dependency>
 			<groupId>com.badlogicgames.gdx</groupId>
@@ -36,13 +36,13 @@
 		<dependency>
 			<groupId>org.equinoxscripts.jassimp</groupId>
 			<artifactId>jassimp</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>1.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.equinoxscripts.jassimp</groupId>
 			<artifactId>jassimp-platform</artifactId>
 			<classifier>natives-desktop</classifier>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>1.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.eclipse.swt</groupId>
@@ -121,4 +121,35 @@
 			</plugin>
 		</plugins>
 	</build>
+
+<!-- bintray -->
+        <repositories>
+                <repository>
+                    <snapshots>
+                            <enabled>false</enabled>
+                    </snapshots>
+                    <id>bintray-openjpog-Utilities</id>
+                    <name>bintray</name>
+                    <url>http://dl.bintray.com/openjpog/Utilities</url>
+                </repository>
+				<repository>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                    <id>bintray-equinox-Maven</id>
+                    <name>bintray</name>
+                    <url>http://dl.bintray.com/equinox/Maven</url>
+                </repository>
+        </repositories>
+
+        <distributionManagement>
+                <repository>
+                        <id>bintray</id>
+                        <url>https://api.bintray.com/maven/openjpog/Utilities/org.equinoxscripts.ojpog.repacker/;publish=1</url>
+                </repository>
+                <snapshotRepository>
+                        <id>bintray</id>
+                        <url>https://api.bintray.com/maven/openjpog/Utilities/org.equinoxscripts.ojpog.repacker/;publish=1</url>
+                </snapshotRepository>
+        </distributionManagement>
 </project>
