@@ -1,16 +1,17 @@
 package org.equinoxscripts.ojpog.repacker.pipeline.prop;
 
-import java.util.HashMap;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.json.simple.JSONObject;
 
-public class PipelinePropertyGroup extends PipelineProperty {
+public class PipelineGroupProperty extends PipelineProperty {
 	private final Map<String, PipelineProperty> props;
 
-	public PipelinePropertyGroup(String key, String title, String tooltip, PipelineProperty... props) {
+	public PipelineGroupProperty(String key, String title, String tooltip, PipelineProperty... props) {
 		super(key, title, tooltip);
-		this.props = new HashMap<>();
+		this.props = new LinkedHashMap<>();
 		for (PipelineProperty p : props)
 			this.props.put(p.key, p);
 	}
@@ -35,9 +36,14 @@ public class PipelinePropertyGroup extends PipelineProperty {
 			for (PipelineProperty p : props.values())
 				p.unmarshalJSON(null);
 		}
+		super.dispatchChange();
 	}
 
 	public PipelineProperty property(String key) {
 		return props.get(key);
+	}
+
+	public Collection<PipelineProperty> properties() {
+		return props.values();
 	}
 }

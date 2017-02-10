@@ -2,14 +2,14 @@ package org.equinoxscripts.ojpog.repacker.pipeline;
 
 import org.equinoxscripts.ojpog.io.tmd.TMD_File;
 import org.equinoxscripts.ojpog.repacker.pipeline.prop.PipelineProperty;
-import org.equinoxscripts.ojpog.repacker.pipeline.prop.PipelinePropertyGroup;
+import org.equinoxscripts.ojpog.repacker.pipeline.prop.PipelineGroupProperty;
 import org.json.simple.JSONObject;
 
 public abstract class PipelineElement {
-	final PipelinePropertyGroup props;
+	final PipelineGroupProperty props;
 
 	protected PipelineElement(PipelineProperty... props) {
-		this.props = new PipelinePropertyGroup("props", "Properties", "", props);
+		this.props = new PipelineGroupProperty("props", "Properties", "", props);
 	}
 
 	public abstract TMD_File morph(TMD_File input);

@@ -54,7 +54,7 @@ public class RepackerUI {
 		TabItem tbtmPipeline = new TabItem(tabs, SWT.NONE);
 		tbtmPipeline.setText("Pipeline");
 
-		PipelineUI pipelineEditor = new PipelineUI(tabs, SWT.NONE);
+		PipelineUI pipelineEditor = new PipelineUI(tabs);
 		tbtmPipeline.setControl(pipelineEditor);
 		
 //		TabItem tbtmMaterialLibrary = new TabItem(tabs, SWT.NONE);
