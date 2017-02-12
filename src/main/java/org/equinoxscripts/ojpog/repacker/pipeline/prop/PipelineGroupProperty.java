@@ -28,7 +28,7 @@ public class PipelineGroupProperty extends PipelineProperty {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void unmarshalJSON(Object json) {
-		if (json != null && !(json instanceof Map)) {
+		if (json != null && json instanceof Map) {
 			Map fs = (Map) json;
 			for (PipelineProperty p : props.values())
 				p.unmarshalJSON(fs.get(p.key));
@@ -39,8 +39,9 @@ public class PipelineGroupProperty extends PipelineProperty {
 		super.dispatchChange();
 	}
 
-	public PipelineProperty property(String key) {
-		return props.get(key);
+	@SuppressWarnings("unchecked")
+	public <T extends PipelineProperty> T property(String key) {
+		return (T) props.get(key);
 	}
 
 	public Collection<PipelineProperty> properties() {

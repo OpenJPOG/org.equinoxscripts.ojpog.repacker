@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
+import org.equinoxscripts.ojpog.io.tkl.TKL_Resolver_Basic;
 import org.equinoxscripts.ojpog.io.tmd.TMD_File;
 import org.equinoxscripts.ojpog.repacker.model.export.ModelBuilder_DAE;
 import org.equinoxscripts.ojpog.repacker.model.export.ModelBuilder_G3DJ;
@@ -74,7 +75,8 @@ public class ModelExtractor {
 						continue;
 					}
 					try {
-						TMD_File file = new TMD_File(f, Utils.read(f), new File(Base.BASE_ORIGINAL, "Data/Models"));
+						TMD_File file = new TMD_File(f.getName().substring(0, f.getName().length() - 4), Utils.read(f),
+								new TKL_Resolver_Basic(new File(Base.BASE_ORIGINAL, "Data/Models")));
 						if (FIND_CATS.length > 0 && !Arrays.stream(FIND_CATS)
 								.filter(s -> file.header.category.equalsIgnoreCase(s)).findAny().isPresent())
 							continue;

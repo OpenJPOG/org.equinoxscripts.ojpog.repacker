@@ -3,11 +3,10 @@ package org.equinoxscripts.ojpog.repacker;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import org.equinoxscripts.ojpog.io.tmd.TMD_File;
-
 import java.util.Set;
 import java.util.TreeMap;
+
+import org.equinoxscripts.ojpog.io.tmd.TMD_File;
 
 public class ValueMapper {
 	private Map<Long, Set<String>> values = new TreeMap<>();

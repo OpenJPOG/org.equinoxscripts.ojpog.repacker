@@ -12,7 +12,6 @@ import java.awt.Image;
 import java.awt.Insets;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -45,9 +44,9 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.equinoxscripts.ojpog.io.dds.DDS_File;
 import org.equinoxscripts.ojpog.io.tml.TML_File;
+import org.equinoxscripts.ojpog.io.tml.TML_File.TML_Material;
 import org.equinoxscripts.ojpog.io.tml.TML_Texture;
 import org.equinoxscripts.ojpog.io.tml.TML_Texture_Format;
-import org.equinoxscripts.ojpog.io.tml.TML_File.TML_Material;
 import org.equinoxscripts.ojpog.repacker.Utils;
 
 public class MaterialLibraryEditor extends JPanel {

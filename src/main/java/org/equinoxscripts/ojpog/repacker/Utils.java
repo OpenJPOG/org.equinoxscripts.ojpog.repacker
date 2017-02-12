@@ -38,7 +38,6 @@ public class Utils {
 			bos.close();
 			return ByteBuffer.wrap(bos.toByteArray()).order(ByteOrder.LITTLE_ENDIAN);
 		} catch (Exception e) {
-			e.printStackTrace();
 			return null;
 		}
 	}

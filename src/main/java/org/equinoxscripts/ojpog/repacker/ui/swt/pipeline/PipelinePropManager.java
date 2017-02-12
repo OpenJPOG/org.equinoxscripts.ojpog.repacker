@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.equinoxscripts.ojpog.repacker.pipeline.prop.PipelineBooleanProperty;
 import org.equinoxscripts.ojpog.repacker.pipeline.prop.PipelineFileProperty;
 import org.equinoxscripts.ojpog.repacker.pipeline.prop.PipelineGroupProperty;
 
@@ -18,6 +19,7 @@ public class PipelinePropManager {
 	static {
 		register(PipelineFileProperty.class, PipelineFilePropertyUI.class);
 		register(PipelineGroupProperty.class, PipelineGroupPropertyUI.class);
+		register(PipelineBooleanProperty.class, PipelineBooleanPropertyUI.class);
 	}
 
 	@SuppressWarnings("unchecked")

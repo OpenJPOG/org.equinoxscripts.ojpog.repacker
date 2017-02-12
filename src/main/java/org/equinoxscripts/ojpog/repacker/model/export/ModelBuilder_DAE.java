@@ -32,16 +32,16 @@ public class ModelBuilder_DAE {
 	}
 
 	public static void write(File out, TMD_File file) throws IOException {
-		new ModelBuilder_DAE(out, file);
+		new ModelBuilder_DAE(out, file, true);
 	}
 
 	private final PrintStream ww;
 	private final TMD_File file;
 	private final Map<TMD_Mesh, FullMesh> meshes = new HashMap<>();
 
-	private ModelBuilder_DAE(File out, TMD_File file) throws FileNotFoundException {
+	public ModelBuilder_DAE(File out, TMD_File file, boolean cleanMesh) throws FileNotFoundException {
 		this.file = file;
-		remapMeshes();
+		remapMeshes(cleanMesh);
 		this.ww = new PrintStream(new BufferedOutputStream(new FileOutputStream(out)));
 		ww.println("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
 		ww.println("<COLLADA xmlns=\"http://www.collada.org/2005/11/COLLADASchema\" version=\"1.4.1\">");
@@ -297,9 +297,13 @@ public class ModelBuilder_DAE {
 		ww.println("</asset>");
 	}
 
-	private void remapMeshes() {
-		for (TMD_Mesh m : file.dLoD.levels[0].members)
-			meshes.put(m, new FullMesh(m).clean());
+	private void remapMeshes(boolean cleanMesh) {
+		for (TMD_Mesh m : file.dLoD.levels[0].members) {
+			FullMesh mesh = new FullMesh(m);
+			if (cleanMesh)
+				mesh = mesh.clean();
+			meshes.put(m, mesh);
+		}
 	}
 
 	private void writeLibraryMaterials() {

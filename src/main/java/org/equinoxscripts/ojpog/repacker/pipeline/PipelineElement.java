@@ -1,18 +1,22 @@
 package org.equinoxscripts.ojpog.repacker.pipeline;
 
 import org.equinoxscripts.ojpog.io.tmd.TMD_File;
-import org.equinoxscripts.ojpog.repacker.pipeline.prop.PipelineProperty;
 import org.equinoxscripts.ojpog.repacker.pipeline.prop.PipelineGroupProperty;
+import org.equinoxscripts.ojpog.repacker.pipeline.prop.PipelineProperty;
 import org.json.simple.JSONObject;
 
 public abstract class PipelineElement {
-	final PipelineGroupProperty props;
+	public final PipelineGroupProperty props;
 
 	protected PipelineElement(PipelineProperty... props) {
-		this.props = new PipelineGroupProperty("props", "Properties", "", props);
+		this.props = new PipelineGroupProperty("props", desc().name(), desc().desc(), props);
 	}
 
-	public abstract TMD_File morph(TMD_File input);
+	public PipelineElementDesc desc() {
+		return getClass().getAnnotation(PipelineElementDesc.class);
+	}
+
+	public abstract TMD_File morph(TMD_File input) throws PipelineException;
 
 	public static PipelineElement unmarshalJSON(Object e) {
 		if (e == null || !(e instanceof JSONObject))

@@ -8,6 +8,9 @@ import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
 
 public class RepackerUI {
+	static {
+		System.loadLibrary("64".equals(System.getProperty("sun.arch.data.model")) ? "gdx64" : "gdx");
+	}
 
 	protected Shell shell;
 
@@ -46,7 +49,7 @@ public class RepackerUI {
 	protected void createContents() {
 		shell = new Shell();
 		shell.setSize(1280, 720);
-		shell.setText("SWT Application");
+		shell.setText("OpenJPOG File Modifier");
 		shell.setLayout(new FillLayout(SWT.HORIZONTAL));
 
 		TabFolder tabs = new TabFolder(shell, SWT.NONE);
@@ -56,12 +59,13 @@ public class RepackerUI {
 
 		PipelineUI pipelineEditor = new PipelineUI(tabs);
 		tbtmPipeline.setControl(pipelineEditor);
-		
-//		TabItem tbtmMaterialLibrary = new TabItem(tabs, SWT.NONE);
-//		tbtmMaterialLibrary.setText("Material Library");
-//
-//		MaterialLibraryUI materialLibraryEditor = new MaterialLibraryUI(tabs, SWT.NONE);
-//		tbtmMaterialLibrary.setControl(materialLibraryEditor);
+
+		// TabItem tbtmMaterialLibrary = new TabItem(tabs, SWT.NONE);
+		// tbtmMaterialLibrary.setText("Material Library");
+		//
+		// MaterialLibraryUI materialLibraryEditor = new MaterialLibraryUI(tabs,
+		// SWT.NONE);
+		// tbtmMaterialLibrary.setControl(materialLibraryEditor);
 
 		TabItem tbtmOptions = new TabItem(tabs, SWT.NONE);
 		tbtmOptions.setText("Options");

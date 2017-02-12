@@ -6,7 +6,7 @@ import java.util.List;
 import org.json.simple.JSONArray;
 
 public class ModelPipeline {
-	private final List<PipelineElement> pipeline = new ArrayList<>();
+	public final List<PipelineElement> pipeline = new ArrayList<>();
 
 	@SuppressWarnings("unchecked")
 	public Object marshalJSON() {

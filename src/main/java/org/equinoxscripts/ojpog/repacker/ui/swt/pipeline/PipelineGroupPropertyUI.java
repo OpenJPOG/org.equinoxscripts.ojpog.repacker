@@ -34,7 +34,7 @@ public class PipelineGroupPropertyUI extends PipelinePropertyUI<PipelineGroupPro
 	}
 
 	public static void groupLayout(Composite c, Collection<PipelineProperty> props) {
-		if (!(c.getLayout() instanceof FormLayout))
+		if (c.getLayout() == null || !(c.getLayout() instanceof FormLayout))
 			c.setLayout(new FormLayout());
 
 		for (Control chi : c.getChildren())
