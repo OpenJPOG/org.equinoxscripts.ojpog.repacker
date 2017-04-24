@@ -1,6 +1,5 @@
 package org.equinoxscripts.ojpog.repacker.model.export;
 
-import java.io.File;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,13 +19,13 @@ import org.equinoxscripts.ojpog.io.tmd.TMD_File;
 import org.equinoxscripts.ojpog.io.tmd.mesh.TMD_Mesh;
 import org.equinoxscripts.ojpog.io.tmd.mesh.TMD_Mesh_Piece;
 import org.equinoxscripts.ojpog.io.tmd.mesh.TMD_Vertex;
+import org.equinoxscripts.ojpog.io.tmd.scene.TMD_Node;
 
 import jassimp.AiBone;
 import jassimp.AiBoneWeight;
 import jassimp.AiMaterial;
 import jassimp.AiMesh;
 import jassimp.AiScene;
-import jassimp.AiTextureType;
 
 public class FullMesh {
 	public static class FullMeshVertex {
@@ -69,8 +68,8 @@ public class FullMesh {
 		this.tris = tris;
 	}
 
-	public FullMesh(TMD_Mesh mesh) {
-		this.mid = "geom_" + mesh.hashCode();
+	public FullMesh(int meshID, TMD_Mesh mesh) {
+		this.mid = "geom_" + meshID;
 		this.materialName = mesh.material_name;
 		short[] remap = new short[mesh.verts.length];
 		Arrays.fill(remap, (short) -1);
@@ -163,7 +162,7 @@ public class FullMesh {
 		for (int j = 0; j < this.tris.length; j++)
 			this.tris[j] = idx.get();
 		AiMaterial mtl = scene.getMaterials().get(mesh.getMaterialIndex());
-		String mat = new File(mtl.getTextureFile(AiTextureType.DIFFUSE, 0)).getName();
+		String mat = mtl.getName();
 		// Strip extension
 		int lk = mat.indexOf('.');
 		if (lk != -1)
@@ -299,6 +298,17 @@ public class FullMesh {
 		if (verts.length >= Short.MAX_VALUE)
 			throw new RuntimeException(
 					"Maximum vertex count is " + Short.MAX_VALUE + ", this mesh has " + verts.length);
+		{ // check if there are any new bones?
+			Set<String> usedBones = new HashSet<>();
+			for (FullMeshVertex vt : this.verts)
+				usedBones.addAll(vt.weights.keySet());
+			for (TMD_Node n : file.nodes.nodes)
+				usedBones.remove(n.node_name);
+			if (!usedBones.isEmpty()) {
+				throw new NullPointerException("Couldn't find bones by name " + usedBones);
+			}
+		}
+		
 		TMD_Vertex[] vt = new TMD_Vertex[this.verts.length];
 		List<PieceBuilder> primaryPieces = new ArrayList<>();
 		{
@@ -312,8 +322,12 @@ public class FullMesh {
 		System.out.println("Divided into " + primaryPieces.size() + " meta pieces due to bone complexity");
 		for (PieceBuilder piece : primaryPieces) {
 			int[] meshParents = new int[piece.bones.size()];
-			for (Entry<String, Integer> e : piece.bones.entrySet())
-				meshParents[e.getValue()] = file.nodes.byName(e.getKey()).id;
+			for (Entry<String, Integer> e : piece.bones.entrySet()) {
+				TMD_Node node = file.nodes.byName(e.getKey());
+				if (node == null)
+					throw new NullPointerException("Unable to find node for piece (\"" + e.getKey() + "\")");
+				meshParents[e.getValue()] = node.id;
+			}
 
 			int[] tii = new TriStripper_NV(piece.tri).generate();
 			int pieceCount = (int) Math.ceil(tii.length / (double) TRI_STRIP_CAP);

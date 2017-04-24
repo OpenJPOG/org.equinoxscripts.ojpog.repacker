@@ -298,11 +298,11 @@ public class ModelBuilder_DAE {
 	}
 
 	private void remapMeshes(boolean cleanMesh) {
-		for (TMD_Mesh m : file.dLoD.levels[0].members) {
-			FullMesh mesh = new FullMesh(m);
+		for (int i = 0; i < file.dLoD.levels[0].members.length; i++) {
+			FullMesh mesh = new FullMesh(i, file.dLoD.levels[0].members[i]);
 			if (cleanMesh)
 				mesh = mesh.clean();
-			meshes.put(m, mesh);
+			meshes.put(file.dLoD.levels[0].members[i], mesh);
 		}
 	}
 

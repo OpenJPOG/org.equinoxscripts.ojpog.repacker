@@ -216,13 +216,6 @@ public class PipelineUI extends Composite {
 						pipeline.pipeline.add(type.make());
 						pipelineChanged();
 					});
-					// item.addListener(SWT.Arm, (e) -> {
-					// ToolTip tip = new
-					// ToolTip(tltmAddType.getParent().getShell(), SWT.NONE);
-					// tip.setText(type.desc.name());
-					// tip.setMessage(type.desc.desc());
-					// tip.setVisible(true);
-					// });
 				}
 			}
 
